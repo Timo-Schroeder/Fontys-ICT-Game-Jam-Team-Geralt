@@ -5,16 +5,20 @@ extends Node
 const LEVEL_SCENE := preload("res://scenes/level.tscn")
 const MENU_SCENE := preload("res://scenes/main_menu.tscn")
 
-# [level id, player position, facing, file name, popup to show]
+# [level id, player position, facing, file name, popup to show, head turn (radians, + = left)]
 var shots := [
-	["1-1", Vector3(-5.25, 0, 14), Vector3.FORWARD, "walk_day", ""],
-	["1-1", Vector3(-5.25, 0, 14), Vector3.FORWARD, "briefing", "briefing"],
-	["1-3", Vector3(-7.25, 0, 16), Vector3.FORWARD, "zebra", ""],
-	["1-9", Vector3(-7.25, 0, 16), Vector3.FORWARD, "walk_evening", ""],
-	["2-7", Vector3(5.0, 0, 24), Vector3.FORWARD, "bike_rain", ""],
-	["2-6", Vector3(5.0, 0, 24), Vector3.FORWARD, "bike_evening", "police"],
-	["3-1", Vector3(1.75, 0, 30), Vector3.FORWARD, "van_day", ""],
-	["3-9", Vector3(1.75, 0, 30), Vector3.FORWARD, "van_fog", ""],
+	["1-1", Vector3(-5.25, 0, 14), Vector3.FORWARD, "walk_day", "", 0.0],
+	["1-1", Vector3(-5.25, 0, 14), Vector3.FORWARD, "briefing", "briefing", 0.0],
+	["1-3", Vector3(-7.25, 0, 16), Vector3.FORWARD, "zebra", "", 0.0],
+	["1-9", Vector3(-7.25, 0, 16), Vector3.FORWARD, "walk_evening", "", 0.0],
+	["2-1", Vector3(5.0, 0, 30), Vector3.FORWARD, "bike_first_person", "", 0.0],
+	["2-1", Vector3(5.0, 0, 30), Vector3.FORWARD, "bike_look_back", "", 2.3],
+	["2-7", Vector3(5.0, 0, 30), Vector3.FORWARD, "bike_rain", "", 0.0],
+	["2-6", Vector3(5.0, 0, 30), Vector3.FORWARD, "bike_evening", "police", 0.0],
+	["3-1", Vector3(1.75, 0, 35), Vector3.FORWARD, "van_day", "", 0.0],
+	["3-1", Vector3(1.75, 0, 35), Vector3.FORWARD, "van_look_left", "", 1.0],
+	["3-1", Vector3(1.75, 0, 35), Vector3.FORWARD, "van_look_right", "", -0.85],
+	["3-9", Vector3(1.75, 0, 35), Vector3.FORWARD, "van_fog", "", 0.0],
 ]
 var out_dir := "user://screenshots"
 
@@ -49,6 +53,8 @@ func _ready() -> void:
 			await get_tree().physics_frame
 		courier.teleport(shot[1], shot[2])
 		level.monitor.set_safe_spot(shot[1], shot[2])
+		if shot[5] != 0.0:
+			courier.add_look(Vector2(-shot[5] / courier.mouse_sensitivity, 0))
 		await _physics(150)
 		match shot[4]:
 			"briefing":

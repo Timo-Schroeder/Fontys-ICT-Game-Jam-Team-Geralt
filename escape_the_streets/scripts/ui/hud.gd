@@ -3,9 +3,9 @@ extends CanvasLayer
 ## On-screen info: level, objective, arrow to the target, stars, time, speed, hints, siren warning.
 
 const CONTROLS := {
-	Courier.Mode.WALK: "WASD lopen  •  muis draaien  •  Shift rennen  •  E drukknop  •  Esc pauze",
-	Courier.Mode.BIKE: "W trappen  •  S remmen  •  A/D of muis sturen  •  L licht  •  B bel  •  Esc pauze",
-	Courier.Mode.CAR: "W gas  •  S rem/achteruit  •  A/D sturen  •  H toeter  •  Esc pauze",
+	Courier.Mode.WALK: "WASD lopen  •  muis kijken en draaien  •  Shift rennen  •  E drukknop  •  Esc pauze",
+	Courier.Mode.BIKE: "W trappen  •  S remmen  •  A/D sturen  •  muis rondkijken  •  C vooruit kijken  •  L licht  •  B bel  •  Esc pauze",
+	Courier.Mode.CAR: "W gas  •  S rem/achteruit  •  A/D sturen  •  muis rondkijken  •  C vooruit kijken  •  H toeter  •  Esc pauze",
 }
 
 @onready var _level_label: Label = %LevelLabel
@@ -58,8 +58,7 @@ func update_status(time_left: float, player: Courier, target: Vector3, speed_lim
 	if player.mode == Courier.Mode.BIKE:
 		_light_label.text = "Licht: AAN" if player.bike_light_on else "Licht: uit (L)"
 	# Arrow: angle between where the camera looks and where the target is.
-	var cam := player.camera
-	var fwd := -cam.global_transform.basis.z
+	var fwd := player.view_direction()
 	var to_target := target - player.global_position
 	var a := Vector2(fwd.x, fwd.z).angle_to(Vector2(to_target.x, to_target.z))
 	_compass.angle = a

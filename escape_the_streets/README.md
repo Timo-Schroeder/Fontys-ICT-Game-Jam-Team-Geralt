@@ -15,16 +15,26 @@ This is a **playable greybox prototype**: all gameplay systems work, but everyth
 3. Press **F5** to start at the main menu. When you run from the editor, all levels are unlocked ("testmodus").
 4. To jump straight into a level, open `scenes/level.tscn` and press **F6**. That plays level 1-1.
 
-## Controls
+## Controls and views
 
 | | On foot | Bike | Van |
 |---|---|---|---|
+| View | Third person | **First person** (rider's eyes) | **First person** (driver's seat, left) |
 | Move | WASD | W pedal, S brake | W accelerate, S brake/reverse |
-| Turn | Mouse | A/D or mouse | A/D or mouse |
+| Steer / turn | Mouse turns you | A/D | A/D |
+| Mouse | Turn and look up/down | **Free look**: turn your head up to 150° (look over your shoulder) | **Free look** up to 140°; the van has no rear window, so use the **side mirrors** |
+| Look ahead again | | C or middle mouse button | C or middle mouse button |
 | Extra | Shift run, E push button | L bike light, B bell | H horn |
 | Pause | Esc | Esc | Esc |
 
+Looking around is part of the lesson: on the bike you check over your shoulder before you cross or turn, and in the van the pillars by the windscreen and the closed load area create real blind spots (dode hoek), so you have to move your head and check the mirrors.
+Set `auto_recenter` on the Courier node if you want the view to turn slowly back to the front while riding.
+
 The keys are physical keys, so WASD sits in the same place on AZERTY keyboards (Belgium). Edit them in *Project → Project Settings → Input Map*.
+
+| Bike (first person) | Van: looking left at the mirror |
+|---|---|
+| ![Bike](docs/screenshots/bike_first_person.jpg) | ![Van mirror](docs/screenshots/van_look_left.jpg) |
 
 ## How a level plays
 
@@ -70,7 +80,8 @@ scripts/level/       StreetLayout (geometry), StreetBuilder (visuals), Environme
 scripts/traffic/     TrafficManager, Vehicle, VehicleSpec, TrafficLane, TrafficLightController,
                      SignalHead (light/button visuals), PedestrianNPC, ToneSynth (siren/horn/bell)
 scripts/rules/       RuleBook (rules and texts), RuleMonitor (watches the player), RulesEngine (stars)
-scripts/player/      Courier: one player with WALK / BIKE / CAR modes
+scripts/player/      Courier: one player with WALK / BIKE / CAR modes, cameras and free look;
+                     SideMirror: working van mirrors (a camera rendering into the mirror glass)
 tests/               automated tests and a screenshot tool
 tools/               level generator, input-map setup
 ```
@@ -115,7 +126,7 @@ To add a level, duplicate a `.tres` file and change its stage and number. It sho
 ## Replacing the greybox
 
 - **Vehicles:** set `VehicleSpec.visual_scene` per type, or replace `Vehicle._build_visual()`.
-- **Player:** `Courier._build_walker/_build_bike/_build_van()`.
+- **Player:** `Courier._build_walker/_build_bike/_build_van()`. Meshes on render layer 2 (`LAYER_OWN_BODY`) are hidden from the first-person camera but still cast shadows and show in mirrors; layer 3 (`LAYER_COCKPIT`) is only seen by the player's own camera.
 - **Street:** `StreetBuilder`. The geometry comes from `StreetLayout`, so models can snap to the same coordinates.
 - **Sound:** swap `ToneSynth` for `AudioStreamPlayer3D` with real samples.
 
@@ -127,13 +138,14 @@ Run them from the project folder:
 godot --headless --path . --fixed-fps 60 res://tests/test_runner.tscn
 ```
 
-The exit code is the number of failed checks. The current status is **172 checks, 0 failed**. The suite checks:
+The exit code is the number of failed checks. The current status is **188 checks, 0 failed**. The suite checks:
 
 - the street geometry;
 - that traffic lights never show conflicting greens, the push button works, and emergency pre-emption works;
 - 3 minutes of traffic in each of the 30 levels: no crashes between AI vehicles, nobody waits more than 60 s at a stop line, and every lane flows;
 - the rules: walking on the road, red light, stepping out in front of a car, zebra yield, and give way;
-- autopilots that finish level 1-1 on foot and level 2-1 on the bike without breaking a rule, and drive the van through a junction in level 3-1.
+- autopilots that finish level 1-1 on foot and level 2-1 on the bike without breaking a rule, and drive the van through a junction in level 3-1;
+- the first-person cameras: eye position, free look that does not steer, head-turn limits, looking ahead again with C, and the two van mirrors.
 
 Set the environment variable `SKIP_TRAFFIC=1` to skip the slow traffic part.
 

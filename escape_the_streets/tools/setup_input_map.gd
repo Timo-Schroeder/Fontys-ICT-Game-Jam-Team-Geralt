@@ -13,7 +13,13 @@ const KEY_ACTIONS := {
 	"interact": [KEY_E, KEY_SPACE],
 	"bike_light": [KEY_L],
 	"bell_horn": [KEY_B, KEY_H],
+	"look_forward": [KEY_C],
 	"pause": [KEY_ESCAPE, KEY_P],
+}
+
+## Extra mouse buttons per action.
+const MOUSE_ACTIONS := {
+	"look_forward": [MOUSE_BUTTON_MIDDLE],
 }
 
 
@@ -26,6 +32,11 @@ func _init() -> void:
 			ev.physical_keycode = keycode
 			ev.device = -1   # all devices, like actions made in the editor
 			events.append(ev)
+		for button: MouseButton in MOUSE_ACTIONS.get(action, []):
+			var mb := InputEventMouseButton.new()
+			mb.button_index = button
+			mb.device = -1
+			events.append(mb)
 		ProjectSettings.set_setting("input/" + action, {"deadzone": 0.2, "events": events})
 	var err := ProjectSettings.save()
 	print("Input map saved: ", error_string(err))

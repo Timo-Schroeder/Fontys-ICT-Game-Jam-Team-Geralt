@@ -31,6 +31,7 @@ func _ready() -> void:
 	await _test_autopilot_level_1_1()
 	await _test_autopilot_bike_2_1()
 	await _test_van_3_1()
+	await _test_free_look()
 	print("\n==== %d checks, %d failed ====" % [checks, failures])
 	get_tree().quit(failures)
 
@@ -427,6 +428,63 @@ func _test_van_3_1() -> void:
 	check(_violations.is_empty(), "van: driving legally breaks no rules (%s)" % ", ".join(names))
 	check(c.global_position.z < -30.0, "van: got through the junction (z=%.1f)" % c.global_position.z)
 	EventBus.violation.disconnect(log_violation)
+	await _unload(level)
+
+
+func _test_free_look() -> void:
+	section("First-person view and free look")
+	# Bike: the mouse turns the head, not the bike.
+	var bike: LevelData = GameState.levels[10]
+	var level := await _load_level(bike)
+	level._on_popup_action("start")
+	var c: Courier = level.courier
+	await _physics_frames(2)
+	check(c.is_first_person(), "bike is first person")
+	var eye_offset := c.camera.global_position - c.global_position
+	check(eye_offset.y > 1.4 and Vector2(eye_offset.x, eye_offset.z).length() < 0.5, "bike camera sits at the rider's eyes (%s)" % eye_offset)
+	check(c.camera.cull_mask & Courier.LAYER_OWN_BODY == 0, "first-person camera hides your own body")
+	var heading_before := c.heading
+	c.add_look(Vector2(-500, 0))   # move the mouse to the left
+	await get_tree().process_frame
+	check(is_equal_approx(c.heading, heading_before), "looking around does not steer the bike")
+	check(c.look_yaw > 1.0, "head turned left (yaw %.2f)" % c.look_yaw)
+	var angle := rad_to_deg(c.forward().signed_angle_to(c.view_direction(), Vector3.UP))
+	check(angle > 60.0, "camera looks to the left of the bike (%.0f degrees)" % angle)
+	c.add_look(Vector2(-5000, 0))
+	check(c.look_yaw <= deg_to_rad(150.0) + 0.001, "head turn is limited to 150 degrees")
+	c.add_look(Vector2(0, -5000))
+	check(c.look_pitch <= deg_to_rad(55.0) + 0.001, "looking up is limited")
+	c.look_forward()
+	await _physics_frames(60)
+	check(absf(c.look_yaw) < 0.02, "C turns the head back to the front (yaw %.3f)" % c.look_yaw)
+	await _unload(level)
+
+	# Van: driver's seat on the left, cockpit, two working mirrors.
+	level = await _load_level(GameState.levels[20])
+	level._on_popup_action("start")
+	c = level.courier
+	await _physics_frames(3)
+	var local_eye := c.to_local(c.camera.global_position)
+	check(local_eye.x < -0.3 and local_eye.y > 1.7, "van camera is in the driver's seat on the left (%s)" % local_eye)
+	var mirrors := c.find_children("*", "SideMirror", true, false)
+	check(mirrors.size() == 2, "van has two side mirrors (%d)" % mirrors.size())
+	for m: SideMirror in mirrors:
+		check(m.texture() != null, "mirror renders a picture")
+	c.add_look(Vector2(0, 0))
+	heading_before = c.heading
+	c.add_look(Vector2(800, 0))   # look right, towards the passenger side
+	check(is_equal_approx(c.heading, heading_before) and c.look_yaw < -1.0, "van: looking right does not steer")
+	await _unload(level)
+
+	# On foot: the mouse still turns the walker.
+	level = await _load_level(GameState.levels[0])
+	level._on_popup_action("start")
+	c = level.courier
+	await _physics_frames(2)
+	check(not c.is_first_person(), "on foot is third person")
+	heading_before = c.heading
+	c.add_look(Vector2(-200, 120))
+	check(c.heading > heading_before, "on foot the mouse turns you")
 	await _unload(level)
 
 

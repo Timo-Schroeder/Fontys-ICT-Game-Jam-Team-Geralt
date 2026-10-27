@@ -101,6 +101,11 @@ func _begin_play() -> void:
 	rules.active = true
 	traffic.player_active = true
 	_give_control()
+	match courier.mode:
+		Courier.Mode.BIKE:
+			hud.show_hint("Kijk om je heen met de muis, ook over je schouder. Druk op C om weer vooruit te kijken.", 6.0)
+		Courier.Mode.CAR:
+			hud.show_hint("Kijk om je heen met de muis en kijk in je spiegels: achter je zit geen raam. C = vooruit kijken.", 7.0)
 
 
 func _give_control() -> void:
