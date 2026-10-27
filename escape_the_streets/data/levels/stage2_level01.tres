@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_nxc4i"]
+
+[resource]
+script = ExtResource("1_nxc4i")
+stage = 1
+title = "Op het fietspad"
+briefing = "Nu ga je op de fiets! Fiets op het rode fietspad aan de rechterkant. Bij het kruispunt heb je een eigen fietslicht: rood is stoppen. Wil je naar de overkant? Kijk links, rechts en weer links en steek recht over."
+lesson = "Fiets op het fietspad, rechts, in de richting van het verkeer. Bij rood stop je."
+car_density = 0.25
+bike_density = 0.2
+emergency_times = PackedFloat32Array()
+start_spot = "S-E-40"
+pickup_spot = "N-E-30"
+delivery_spot = "N-W-24"
+pickup_name = "Pizzeria"
+delivery_name = "Familie Yilmaz"

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_nkw3e"]
+
+[resource]
+script = ExtResource("1_nkw3e")
+stage = 2
+number = 3
+title = "Haaientanden met de auto"
+briefing = "Haaientanden: jij moet voorrang geven aan al het verkeer op de andere weg, ook aan fietsers."
+lesson = "Haaientanden: stoppen, kijken en pas gaan als het helemaal vrij is."
+junction_control = 1
+crossing_type = 1
+car_density = 0.25
+bike_density = 0.25
+emergency_times = PackedFloat32Array()
+start_spot = "S-E-45"
+pickup_spot = "N-E-30"
+delivery_spot = "S-W-35"
+pickup_name = "Meubelwinkel"
+delivery_name = "Familie Hendriks"

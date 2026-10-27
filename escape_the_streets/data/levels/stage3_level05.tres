@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_f232r"]
+
+[resource]
+script = ExtResource("1_f232r")
+stage = 2
+number = 5
+title = "Bus en vrachtwagen"
+briefing = "Hier mag je 50 km per uur. Er rijden bussen en vrachtwagens: houd genoeg afstand."
+lesson = "Houd afstand tot het voertuig voor je, zodat je op tijd kunt stoppen."
+speed_limit_kmh = 50
+car_density = 0.35
+bike_density = 0.25
+bus_share = 0.2
+truck_share = 0.2
+emergency_times = PackedFloat32Array()
+start_spot = "S-E-45"
+pickup_spot = "N-E-30"
+delivery_spot = "S-W-35"
+pickup_name = "Distributiecentrum"
+delivery_name = "Supermarkt"

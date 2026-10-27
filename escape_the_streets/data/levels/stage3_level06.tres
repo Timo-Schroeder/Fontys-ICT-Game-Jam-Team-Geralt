@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_exbb0"]
+
+[resource]
+script = ExtResource("1_exbb0")
+stage = 2
+number = 6
+title = "Op de voorrangsweg"
+briefing = "Je rijdt op de voorrangsweg. Verkeer uit de zijstraten moet jou voorrang geven, maar rijd niet te hard: 50 is het maximum."
+lesson = "Voorrang hebben betekent niet dat je niet hoeft op te letten."
+junction_control = 1
+crossing_type = 1
+speed_limit_kmh = 50
+car_density = 0.28
+bike_density = 0.25
+motorbike_share = 0.1
+emergency_times = PackedFloat32Array()
+start_spot = "W-S-45"
+pickup_spot = "E-S-35"
+delivery_spot = "W-N-30"
+pickup_name = "Garage"
+delivery_name = "Bakkerij"

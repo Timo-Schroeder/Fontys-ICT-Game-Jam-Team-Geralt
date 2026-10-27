@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_xopmk"]
+
+[resource]
+script = ExtResource("1_xopmk")
+number = 6
+title = "Bussen en vrachtwagens"
+briefing = "Grote voertuigen zoals bussen en vrachtwagens kunnen niet snel stoppen en zien kleine mensen niet altijd. De huizen staan hier dicht bij de weg: kijk extra goed om de hoek."
+lesson = "Grote voertuigen zien je soms niet. Ga nooit vlak naast of voor een bus of vrachtwagen staan."
+building_setback = 2.5
+car_density = 0.4
+bus_share = 0.2
+truck_share = 0.15
+emergency_times = PackedFloat32Array()
+walkers = 3
+start_spot = "S-W-40"
+delivery_spot = "N-E-24"
+pickup_name = "Supermarkt"
+delivery_name = "Basisschool"
+time_limit = 300.0

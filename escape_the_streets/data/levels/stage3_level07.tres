@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_71lb1"]
+
+[resource]
+script = ExtResource("1_71lb1")
+stage = 2
+number = 7
+title = "Ruim baan"
+briefing = "Een ambulance met zwaailicht en sirene gaat altijd voor. Stop bij het kruispunt, ook bij groen, en laat hem eerst gaan."
+lesson = "Hulpdiensten met zwaailicht en sirene gaan altijd voor."
+emergency_times = PackedFloat32Array(20, 60)
+start_spot = "S-E-45"
+pickup_spot = "N-E-30"
+delivery_spot = "S-W-35"
+pickup_name = "Ziekenhuis"
+delivery_name = "Huisartsenpost"

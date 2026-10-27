@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_jxoxs"]
+
+[resource]
+script = ExtResource("1_jxoxs")
+stage = 2
+number = 8
+title = "Avondrit"
+briefing = "Het is donker. Fietsers en voetgangers zie je pas laat. Rijd rustig en kijk goed bij het oversteken."
+lesson = "In het donker rijd je rustiger, omdat je anderen later ziet."
+time_of_day = 1
+bike_density = 0.35
+emergency_times = PackedFloat32Array()
+walkers = 3
+runners = 2
+start_spot = "W-S-45"
+pickup_spot = "E-S-30"
+delivery_spot = "W-N-35"
+pickup_name = "Pakketcentrum"
+delivery_name = "Familie Kok"

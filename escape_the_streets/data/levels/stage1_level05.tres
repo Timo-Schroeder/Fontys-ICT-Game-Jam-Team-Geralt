@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_c4nby"]
+
+[resource]
+script = ExtResource("1_c4nby")
+number = 5
+title = "Oversteken zonder zebrapad"
+briefing = "Hier is geen zebrapad en geen verkeerslicht. Het verkeer stopt niet voor jou! Wacht op de stoep tot de weg helemaal vrij is: kijk links, rechts en weer links."
+lesson = "Zonder zebrapad heeft het verkeer voorrang. Steek pas over als de weg helemaal vrij is."
+junction_control = 1
+crossing_type = 2
+building_setback = 6.0
+car_density = 0.18
+bike_density = 0.2
+emergency_times = PackedFloat32Array()
+start_spot = "E-N-30"
+pickup_spot = "W-N-28"
+delivery_spot = "W-S-34"
+pickup_name = "Bibliotheek"
+delivery_name = "Mevrouw De Vries"
+time_limit = 300.0

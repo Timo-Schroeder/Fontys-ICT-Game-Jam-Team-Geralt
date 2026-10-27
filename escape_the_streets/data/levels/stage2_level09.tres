@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_idiqt"]
+
+[resource]
+script = ExtResource("1_idiqt")
+stage = 1
+number = 9
+title = "Sirene op de fiets"
+briefing = "Er komen hulpdiensten langs. Hoor je een sirene? Stop op het fietspad en laat de ambulance of brandweer eerst gaan."
+lesson = "Bij een sirene stop je en laat je de hulpdienst voorgaan."
+car_density = 0.35
+emergency_times = PackedFloat32Array(25, 70)
+start_spot = "S-E-40"
+pickup_spot = "N-E-30"
+delivery_spot = "S-W-35"
+pickup_name = "Dierenwinkel"
+delivery_name = "Familie Mulder"

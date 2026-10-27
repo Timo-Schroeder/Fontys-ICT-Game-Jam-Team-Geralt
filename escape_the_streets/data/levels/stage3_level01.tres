@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_tmb5p"]
+
+[resource]
+script = ExtResource("1_tmb5p")
+stage = 2
+title = "Rustig rijden"
+briefing = "Je hebt nu een bezorgbusje! Rijd rechts op de weg en houd je aan 30 km per uur. Bij een inrit geef je voorrang aan voetgangers en fietsers."
+lesson = "Uit een inrit komen: iedereen gaat voor. Op de weg houd je je aan de maximumsnelheid."
+car_density = 0.15
+bike_density = 0.2
+emergency_times = PackedFloat32Array()
+walkers = 3
+start_spot = "S-E-45"
+pickup_spot = "N-E-30"
+delivery_spot = "S-W-35"
+pickup_name = "Groothandel"
+delivery_name = "Restaurant"

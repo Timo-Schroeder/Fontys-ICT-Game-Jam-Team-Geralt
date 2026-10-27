@@ -1,0 +1,35 @@
+[gd_scene load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://scripts/level/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://scripts/level/environment_controller.gd" id="2_env"]
+[ext_resource type="Script" path="res://scripts/level/street_builder.gd" id="3_streets"]
+[ext_resource type="Script" path="res://scripts/traffic/traffic_manager.gd" id="4_traffic"]
+[ext_resource type="Script" path="res://scripts/rules/rules_engine.gd" id="5_rules"]
+[ext_resource type="Script" path="res://scripts/rules/rule_monitor.gd" id="6_monitor"]
+[ext_resource type="PackedScene" path="res://scenes/player/courier.tscn" id="7_courier"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="8_hud"]
+[ext_resource type="PackedScene" path="res://scenes/ui/game_popup.tscn" id="9_popup"]
+
+[node name="Level" type="Node3D"]
+script = ExtResource("1_level")
+
+[node name="Environment" type="Node3D" parent="."]
+script = ExtResource("2_env")
+
+[node name="Streets" type="Node3D" parent="."]
+script = ExtResource("3_streets")
+
+[node name="Traffic" type="Node3D" parent="."]
+script = ExtResource("4_traffic")
+
+[node name="RulesEngine" type="Node" parent="."]
+script = ExtResource("5_rules")
+
+[node name="RuleMonitor" type="Node" parent="."]
+script = ExtResource("6_monitor")
+
+[node name="Courier" parent="." instance=ExtResource("7_courier")]
+
+[node name="HUD" parent="." instance=ExtResource("8_hud")]
+
+[node name="Popup" parent="." instance=ExtResource("9_popup")]

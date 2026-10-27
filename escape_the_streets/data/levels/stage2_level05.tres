@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_a140b"]
+
+[resource]
+script = ExtResource("1_a140b")
+stage = 1
+number = 5
+title = "Fatbikes en wielrenners"
+briefing = "Op het fietspad is het druk. Fatbikes en groepjes wielrenners gaan hard. Houd rechts en kijk achterom voordat je het fietspad op gaat."
+lesson = "Kijk achterom voordat je het fietspad op rijdt. Snelle fietsers zijn er sneller dan je denkt."
+bike_density = 0.6
+fatbike_share = 0.35
+race_group_share = 0.15
+emergency_times = PackedFloat32Array()
+start_spot = "W-S-40"
+pickup_spot = "E-S-30"
+delivery_spot = "W-N-32"
+pickup_name = "Fietsenwinkel"
+delivery_name = "Familie De Jong"

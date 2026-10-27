@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_6h4mj"]
+
+[resource]
+script = ExtResource("1_6h4mj")
+number = 9
+title = "Het wordt donker"
+briefing = "Het wordt al donker. Bestuurders zien je dan minder goed. Steek alleen over bij groen en kijk goed om je heen."
+lesson = "In het donker zien anderen je slecht. Draag lichte kleren of reflectie en steek over op een veilige plek."
+time_of_day = 1
+car_density = 0.35
+bike_density = 0.35
+emergency_times = PackedFloat32Array()
+walkers = 4
+runners = 3
+start_spot = "E-S-30"
+pickup_spot = "W-S-32"
+delivery_spot = "W-N-28"
+pickup_name = "Snackbar"
+delivery_name = "Meneer Bakker"
+time_limit = 300.0

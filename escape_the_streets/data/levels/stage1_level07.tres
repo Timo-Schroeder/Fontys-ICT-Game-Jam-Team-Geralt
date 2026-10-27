@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_1ig5g"]
+
+[resource]
+script = ExtResource("1_1ig5g")
+number = 7
+title = "Sirene!"
+briefing = "Vandaag rijden er ambulances en brandweerauto's. Hoor je een sirene? Blijf op de stoep staan, ook als jouw licht groen is."
+lesson = "Hoor je een sirene of zie je blauwe lichten? Blijf van de weg en laat de hulpdienst voorgaan."
+emergency_times = PackedFloat32Array(20, 75)
+start_spot = "W-S-30"
+pickup_spot = "E-S-30"
+delivery_spot = "E-N-34"
+pickup_name = "Huisarts"
+delivery_name = "Buurvrouw Ans"
+time_limit = 300.0

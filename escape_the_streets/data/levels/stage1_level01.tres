@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_02g42"]
+
+[resource]
+script = ExtResource("1_02g42")
+title = "Het eerste pakketje"
+briefing = "Je eerste dag als bezorger! Je loopt naar de bakker en brengt daarna een pakketje rond. Bij het kruispunt staan verkeerslichten voor voetgangers. Druk op de knop (E) en wacht op groen."
+lesson = "Bij een voetgangerslicht druk je op de knop en wacht je op groen."
+has_bike_paths = false
+building_setback = 6.0
+car_density = 0.2
+bike_density = 0.0
+emergency_times = PackedFloat32Array()
+pickup_spot = "N-W-26"
+delivery_spot = "N-E-30"
+pickup_name = "Bakkerij"
+delivery_name = "Familie Jansen"
+time_limit = 300.0

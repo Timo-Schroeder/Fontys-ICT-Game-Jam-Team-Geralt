@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_rgv53"]
+
+[resource]
+script = ExtResource("1_rgv53")
+stage = 2
+number = 2
+title = "Verkeerslichten"
+briefing = "Bij oranje stop je als dat nog veilig kan. Bij rood stop je altijd voor de streep."
+lesson = "Oranje betekent: stoppen als dat veilig kan. Rood betekent: altijd stoppen."
+car_density = 0.35
+emergency_times = PackedFloat32Array()
+start_spot = "W-S-45"
+pickup_spot = "E-S-30"
+delivery_spot = "W-N-35"
+pickup_name = "Bouwmarkt"
+delivery_name = "Familie Peters"

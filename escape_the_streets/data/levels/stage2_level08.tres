@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_avkf8"]
+
+[resource]
+script = ExtResource("1_avkf8")
+stage = 1
+number = 8
+title = "Geen fietspad"
+briefing = "In deze straat is geen fietspad. Dan fiets je op de rijbaan, helemaal rechts. Auto's moeten achter je blijven of je voorzichtig inhalen."
+lesson = "Is er geen fietspad? Fiets dan rechts op de weg."
+has_bike_paths = false
+bike_density = 0.0
+emergency_times = PackedFloat32Array()
+start_spot = "S-E-40"
+pickup_spot = "N-E-30"
+delivery_spot = "S-W-30"
+pickup_name = "IJssalon"
+delivery_name = "Juf Emma"

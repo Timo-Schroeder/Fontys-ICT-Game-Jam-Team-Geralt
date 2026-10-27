@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_ub135"]
+
+[resource]
+script = ExtResource("1_ub135")
+stage = 2
+number = 10
+title = "Logistiek-kampioen"
+briefing = "De laatste rit: avond, regen, spitsuur en een ambulance. Laat zien dat je de veiligste bezorger van de stad bent!"
+lesson = "Een goede bezorger is niet de snelste, maar de veiligste."
+time_of_day = 1
+weather = 1
+building_setback = 3.0
+speed_limit_kmh = 50
+car_density = 0.5
+bike_density = 0.45
+bus_share = 0.12
+truck_share = 0.1
+motorbike_share = 0.08
+fatbike_share = 0.25
+race_group_share = 0.1
+emergency_times = PackedFloat32Array(40)
+walkers = 4
+runners = 2
+start_spot = "S-E-45"
+pickup_spot = "N-E-30"
+delivery_spot = "S-W-35"
+pickup_name = "Hoofdkantoor"
+delivery_name = "Stadhuis"
+time_limit = 280.0

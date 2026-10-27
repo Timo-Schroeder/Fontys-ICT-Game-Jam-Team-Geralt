@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_5tnoj"]
+
+[resource]
+script = ExtResource("1_5tnoj")
+stage = 1
+number = 2
+title = "Rood is stoppen"
+briefing = "Twee keer over het kruispunt. Stop bij rood, ook als er niemand aankomt."
+lesson = "Bij rood stop je altijd, ook als de weg leeg lijkt."
+car_density = 0.35
+emergency_times = PackedFloat32Array()
+start_spot = "S-E-40"
+pickup_spot = "N-E-30"
+delivery_spot = "S-W-35"
+pickup_name = "Bloemist"
+delivery_name = "Opa Kees"

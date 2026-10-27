@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_jjwd3"]
+
+[resource]
+script = ExtResource("1_jjwd3")
+stage = 1
+number = 10
+title = "Avondspits op de fiets"
+briefing = "Donker, regen en heel druk. Licht aan, rustig fietsen en goed kijken!"
+lesson = "Licht aan, rustig aan en goed kijken: zo kom je overal veilig."
+time_of_day = 1
+weather = 1
+building_setback = 3.0
+car_density = 0.5
+bike_density = 0.5
+bus_share = 0.1
+fatbike_share = 0.25
+race_group_share = 0.1
+emergency_times = PackedFloat32Array(50)
+walkers = 3
+runners = 2
+start_spot = "W-S-40"
+pickup_spot = "E-S-34"
+delivery_spot = "W-N-30"
+pickup_name = "Pakketpunt"
+delivery_name = "Wethouder"
+time_limit = 280.0

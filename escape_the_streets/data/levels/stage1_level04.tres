@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_47d5u"]
+
+[resource]
+script = ExtResource("1_47d5u")
+number = 4
+title = "Fietsers en fatbikes"
+briefing = "Er fietsen veel mensen langs, en fatbikes gaan extra hard. Fietsers hebben hun eigen stoplicht. Ook als jij groen hebt: kijk goed of iedereen stopt."
+lesson = "Fietsers en fatbikes kunnen hard rijden. Kijk ook naar het fietspad voordat je oversteekt."
+bike_density = 0.6
+fatbike_share = 0.35
+race_group_share = 0.1
+emergency_times = PackedFloat32Array()
+start_spot = "N-W-30"
+pickup_spot = "S-W-26"
+delivery_spot = "S-E-32"
+pickup_name = "Fietsenmaker"
+delivery_name = "Kinderboerderij"
+time_limit = 300.0

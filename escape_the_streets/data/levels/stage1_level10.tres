@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_kr5h1"]
+
+[resource]
+script = ExtResource("1_kr5h1")
+number = 10
+title = "Spitsuur"
+briefing = "Spitsuur! Het is heel druk. Laat zien wat je hebt geleerd: knop, groen licht, en goed kijken."
+lesson = "Ook als het druk is: rustig blijven, wachten op groen en goed kijken."
+building_setback = 2.5
+car_density = 0.6
+bike_density = 0.5
+bus_share = 0.12
+truck_share = 0.08
+motorbike_share = 0.08
+fatbike_share = 0.25
+race_group_share = 0.1
+emergency_times = PackedFloat32Array(45)
+walkers = 5
+runners = 3
+pickup_spot = "N-E-30"
+delivery_spot = "S-E-30"
+pickup_name = "Postkantoor"
+delivery_name = "Burgemeester"
+time_limit = 360.0

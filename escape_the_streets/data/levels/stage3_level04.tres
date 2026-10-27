@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_0k5rt"]
+
+[resource]
+script = ExtResource("1_0k5rt")
+stage = 2
+number = 4
+title = "Fietsers naast je"
+briefing = "Sla je rechtsaf? Fietsers die rechtdoor gaan, gaan voor! Kijk in je spiegel en over je schouder."
+lesson = "Rechtsaf slaan: eerst fietsers en voetgangers die rechtdoor gaan voor laten gaan."
+bike_density = 0.6
+fatbike_share = 0.3
+emergency_times = PackedFloat32Array()
+start_spot = "S-E-45"
+pickup_spot = "E-S-30"
+delivery_spot = "W-N-35"
+pickup_name = "Bloemenveiling"
+delivery_name = "Hotel"
+time_limit = 260.0

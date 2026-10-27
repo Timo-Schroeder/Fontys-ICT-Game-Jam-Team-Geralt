@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="LevelData" format=3]
+
+[ext_resource type="Script" path="res://scripts/data/level_data.gd" id="1_6h3yp"]
+
+[resource]
+script = ExtResource("1_6h3yp")
+number = 2
+title = "Het fietspad"
+briefing = "Naast de stoep ligt een rood fietspad. Dat is voor fietsers! Blijf op de stoep en steek alleen over bij het voetgangerslicht."
+lesson = "De stoep is voor voetgangers, het rode fietspad is voor fietsers."
+car_density = 0.25
+bike_density = 0.35
+emergency_times = PackedFloat32Array()
+start_spot = "S-E-28"
+pickup_spot = "N-E-30"
+delivery_spot = "N-W-34"
+pickup_name = "Apotheek"
+delivery_name = "Opa Henk"
+time_limit = 300.0
