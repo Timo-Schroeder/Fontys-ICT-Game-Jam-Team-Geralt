@@ -10,3 +10,35 @@
 
 ## Target Group
 Children at around 6 - 12 years of age, in order to get them more familiar with traffic rules and situations, and prepare them for their bicycle rides.
+
+## Game Design Ideas
+
+### Goal
+Go from A -> B -> C safely
+
+### Problem
+Avoid obstacles:
+- Cars
+  - Emergency cars
+- Bikes
+  - Fatbikes
+  - Race bike groups
+- Pedestrians
+  - Runners
+ 
+Different day times; different weather conditions; different crossroads and visibility levels
+
+### Experience
+Rewarding; Progressive; Challenging
+
+### Rules
+- The player must not disturb traffic
+- If anything hits the player, they lose
+- WASD to move, mouse to turn
+- Time constraints
+
+### Baseline
+_TBD_
+https://swov.nl/en/fact/education-4-how-traffic-education-schoolchildren-organised ?
+
+https://vvn.nl/leer-meer/op-school/verkeersmethode
