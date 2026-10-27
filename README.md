@@ -1,1 +1,12 @@
-# Fontys-ICT-Game-Jam-Team-Geralt
+# Escape the Streets
+
+> [!NOTE]
+> **Game Case: Educate people about proper road design** \
+> A Dutch street designer is looking for ways to make the streets in Eindhoven more safe. To outsource the problem, he want people in the local neighbourhoods to play a game to gain a fresh view of the streets outside their door, and thereby helping to design optimal solutions to their local situations.
+
+## Game Idea: Escape the Streets
+- We are a local delivery guy, starting as a pedestrian and working our way up through motorized vehicles to logistics.
+- We have to follow traffic rules, otherwise we end up in accidents or get stopped by police patrol.
+
+## Target Group
+Children at around 6 - 12 years of age, in order to get them more familiar with traffic rules and situations, and prepare them for their bicycle rides.
