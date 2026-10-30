@@ -12,6 +12,7 @@ bike_density = 0.6
 fatbike_share = 0.35
 race_group_share = 0.1
 emergency_times = PackedFloat32Array()
+bad_actor_chance = 0.03
 start_spot = "N-W-30"
 pickup_spot = "S-W-26"
 delivery_spot = "S-E-32"

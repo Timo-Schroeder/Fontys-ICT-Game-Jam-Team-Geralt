@@ -8,6 +8,8 @@ extends Node
 ## 3. Traffic simulation for all 30 levels: no crashes between AI vehicles, no deadlocks.
 ## 4. Rules: walking on the road, red light, forcing a car to brake, zebra yield, give way.
 ## 5. Autopilot: plays level 1-1 start to finish with the real player controller.
+## 6. Bad actors: red-light runners, zebra ignorers, the look-left-and-right check,
+##    and a stress test with many rule breakers (still no crashes between AI vehicles).
 
 const LEVEL_SCENE := preload("res://scenes/level.tscn")
 
@@ -32,6 +34,7 @@ func _ready() -> void:
 	await _test_autopilot_bike_2_1()
 	await _test_van_3_1()
 	await _test_free_look()
+	await _test_bad_actors()
 	print("\n==== %d checks, %d failed ====" % [checks, failures])
 	get_tree().quit(failures)
 
@@ -117,9 +120,16 @@ func _test_lights() -> void:
 func _test_traffic_all_levels() -> void:
 	section("Traffic simulation, all levels (180 s each)")
 	for data in GameState.levels:
+		await _simulate_traffic(data, data.level_id(), data.title)
+
+
+## Runs 180 s of traffic without a player and checks for crashes, queues and deadlocks.
+func _simulate_traffic(data: LevelData, id_text: String, label: String) -> void:
+	if true:
 		var level := await _load_level(data)
 		var traffic: TrafficManager = level.traffic
 		traffic.player_active = false
+		var bad := {}
 		var crashes := 0
 		var order_errors := 0
 		var spawned := {}
@@ -133,6 +143,8 @@ func _test_traffic_all_levels() -> void:
 				for v: Vehicle in lane.vehicles:
 					var id := v.get_instance_id()
 					spawned[id] = true
+					if v.spec.misbehaviour != VehicleSpec.Misbehaviour.NONE:
+						bad[id] = true
 					if prev and prev.rear() < v.front() - 0.05:
 						order_errors += 1
 					prev = v
@@ -147,13 +159,13 @@ func _test_traffic_all_levels() -> void:
 			var density := data.car_density if lane.def.kind == "road" else data.bike_density
 			if density > 0.0 and int(crossed.get(lane.def.name, 0)) == 0:
 				stuck_lanes.append(lane.def.name)
-		var id_text := data.level_id()
 		check(crashes == 0, "%s: no crashes in junction (got %d overlap frames)" % [id_text, crashes])
 		check(order_errors == 0, "%s: vehicles keep their distance (got %d)" % [id_text, order_errors])
 		check(head_wait < 60.0, "%s: nobody waits more than 60 s at a stop line (longest %.0f s)" % [id_text, head_wait])
 		check(stuck_lanes.is_empty(), "%s: traffic gets through on every lane (stuck: %s)" % [id_text, ", ".join(stuck_lanes)])
 		var ok := crashes == 0 and order_errors == 0 and head_wait < 60.0 and stuck_lanes.is_empty()
-		print("  %-5s %-28s vehicles %3d  longest wait at line %4.1f s  %s" % [id_text, data.title, spawned.size(), head_wait, "ok" if ok else "PROBLEM"])
+		print("  %-5s %-28s vehicles %3d (rule breakers %2d)  longest wait at line %4.1f s  %s" % [
+				id_text, label, spawned.size(), bad.size(), head_wait, "ok" if ok else "PROBLEM"])
 		await _unload(level)
 
 
@@ -191,7 +203,7 @@ func _test_rules() -> void:
 	courier.teleport(Vector3(1.75, 0, 30), Vector3.FORWARD)
 	await _physics_frames(40)
 	check(_violations.has(RuleBook.Violation.WALKING_ON_ROAD), "walking on the road is reported")
-	check(level.rules.stars == 2, "police stop costs a star (stars=%d)" % level.rules.stars)
+	check(level.rules.lives == 2, "police stop costs a life (lives=%d)" % level.rules.lives)
 	check(level.popup.is_open and level.state == level.State.POLICE_STOP, "police popup shown")
 	level._on_popup_action("continue")
 	await _physics_frames(2)
@@ -320,6 +332,8 @@ func _test_autopilot_level_1_1() -> void:
 				frames += 1
 				if frames > 60 * 400 or level.state != level.State.PLAYING:
 					break
+			# Like a careful child: look left, right and left again before crossing.
+			await _look_both_ways(courier, button.road_axis)
 		if level.state != level.State.PLAYING:
 			break
 	await _physics_frames(10)
@@ -338,6 +352,7 @@ func _test_autopilot_bike_2_1() -> void:
 	section("Autopilot rides level 2-1 on the bike")
 	var data: LevelData = GameState.levels[10].duplicate()
 	data.walkers = 0
+	data.bad_actor_chance = 0.0   # the autopilot does not watch out for rule breakers
 	var level := await _load_level(data)
 	level._on_popup_action("start")
 	var c: Courier = level.courier
@@ -388,6 +403,7 @@ func _test_van_3_1() -> void:
 	section("Van drives through the junction in level 3-1")
 	var data: LevelData = GameState.levels[20].duplicate()
 	data.walkers = 0
+	data.bad_actor_chance = 0.0
 	var level := await _load_level(data)
 	level._on_popup_action("start")
 	var c: Courier = level.courier
@@ -476,16 +492,197 @@ func _test_free_look() -> void:
 	check(is_equal_approx(c.heading, heading_before) and c.look_yaw < -1.0, "van: looking right does not steer")
 	await _unload(level)
 
-	# On foot: the mouse still turns the walker.
+	# On foot: first person at a child's eye height; the mouse turns the walker.
 	level = await _load_level(GameState.levels[0])
 	level._on_popup_action("start")
 	c = level.courier
 	await _physics_frames(2)
-	check(not c.is_first_person(), "on foot is third person")
+	check(c.is_first_person(), "on foot is first person")
+	eye_offset = c.camera.global_position - c.global_position
+	check(eye_offset.y > 1.2 and eye_offset.y < 1.5 and Vector2(eye_offset.x, eye_offset.z).length() < 0.1,
+			"walking camera at a child's eye height (%s)" % eye_offset)
 	heading_before = c.heading
 	c.add_look(Vector2(-200, 120))
 	check(c.heading > heading_before, "on foot the mouse turns you")
+	check(c.look_pitch < Courier.DEFAULT_PITCH[Courier.Mode.WALK], "on foot the mouse also looks down")
 	await _unload(level)
+
+	# Lives: hearts in the HUD, and the lives left become the stars.
+	level = await _load_level(GameState.levels[0])
+	level._on_popup_action("start")
+	check(level.hud.get_node("%Lives").lives == 3, "HUD starts with 3 hearts")
+	level.rules.active = true
+	EventBus.violation.emit(RuleBook.Violation.WALKING_ON_ROAD, {})
+	await _physics_frames(1)
+	check(level.hud.get_node("%Lives").lives == 2, "a police stop takes one heart (%d)" % level.hud.get_node("%Lives").lives)
+	check(level.popup.get_node("%PopupLives").visible and level.popup.get_node("%PopupLives").lives == 2, "police popup shows the hearts left")
+	level._on_popup_action("continue")
+	_finished.clear()
+	level._succeed()
+	check(not _finished.is_empty() and _finished[0][1] == 2, "2 lives left = 2 stars")
+	check(level.popup.get_node("%PopupStars").visible and level.popup.get_node("%PopupStars").stars == 2, "end screen shows 2 stars")
+	await _unload(level)
+
+
+# --- 6. Bad actors ---------------------------------------------------------------------------
+
+func _test_bad_actors() -> void:
+	section("Bad actors (rule breakers)")
+	var bad_events: Array = []
+	var on_bad := func(m: int, who: String, close: bool) -> void: bad_events.append([m, who, close])
+	EventBus.bad_actor.connect(on_bad)
+	var M := VehicleSpec.Misbehaviour
+
+	# Red-light runner vs. normal driver: both approach a red light, only the runner drives on.
+	var lights_level := _custom_level(true)
+	var level := await _load_level(lights_level)
+	level._on_popup_action("start")
+	var traffic: TrafficManager = level.traffic
+	traffic.lights.phase = 3          # east-west green, north-south red
+	traffic.lights.phase_time = 0.0
+	var runner := traffic._spawn_vehicle(traffic.lanes[0], VehicleSpec.create("car", 8.33, traffic.rng, false))
+	runner.spec.make_bad(M.RUNS_RED, traffic.rng)
+	runner.offset = 20.0
+	runner.speed = 8.33
+	var good := traffic._spawn_vehicle(traffic.lanes[1], VehicleSpec.create("car", 8.33, traffic.rng, false))
+	good.offset = 20.0
+	good.speed = 8.33
+	await _physics_frames(60 * 8)
+	check(runner.front() > runner.lane.def.junction_exit, "red-light runner drove through red (front %.1f)" % runner.front())
+	check(good.front() <= good.lane.def.stop_offset + 0.5 and good.speed < 0.2, "normal driver stopped for red (front %.1f)" % good.front())
+	await _unload(level)
+
+	# A runner does NOT run the red light when a crossing car could get in the way.
+	level = await _load_level(lights_level)
+	level._on_popup_action("start")
+	traffic = level.traffic
+	traffic.lights.phase = 3
+	traffic.lights.phase_time = 0.0
+	var cross := traffic._spawn_vehicle(traffic.lanes[2], VehicleSpec.create("car", 8.33, traffic.rng, false))
+	cross.offset = traffic.lanes[2].def.junction_enter - 25.0
+	cross.speed = 8.33
+	runner = traffic._spawn_vehicle(traffic.lanes[0], VehicleSpec.create("car", 8.33, traffic.rng, false))
+	runner.spec.make_bad(M.RUNS_RED, traffic.rng)
+	runner.offset = traffic.lanes[0].def.stop_offset - 22.0
+	runner.speed = 8.33
+	await _physics_frames(60 * 3)
+	check(runner.red_decision == -1 and runner.front() <= runner.lane.def.stop_offset + 0.5,
+			"runner stops when crossing traffic is coming (decision %d)" % runner.red_decision)
+	await _unload(level)
+
+	# Zebra ignorer drives past a waiting child; the child stays safe and gets praise.
+	var zebra := _custom_level(true)
+	zebra.junction_control = LevelData.JunctionControl.PRIORITY_ROAD
+	zebra.crossing_type = LevelData.CrossingType.ZEBRA
+	level = await _load_level(zebra)
+	level._on_popup_action("start")
+	traffic = level.traffic
+	var courier: Courier = level.courier
+	courier.teleport(Vector3(-7.25, 0, -6.8), Vector3.BACK)   # waiting next to the west zebra
+	var lane: TrafficLane = traffic.lanes[3]   # westbound, nearest to the child
+	var ignorer := traffic._spawn_vehicle(lane, VehicleSpec.create("car", 8.33, traffic.rng, false))
+	ignorer.spec.make_bad(M.IGNORES_ZEBRA, traffic.rng)
+	ignorer.offset = 30.0
+	ignorer.speed = 8.33
+	_violations.clear()
+	bad_events.clear()
+	await _physics_frames(60 * 9)
+	var west_entry: Dictionary = {}
+	for e: Dictionary in lane.def.crossings:
+		if (e["crossing"] as StreetLayout.Crossing).arm == "W":
+			west_entry = e
+	check(ignorer.rear() > west_entry["exit"], "zebra ignorer drove past the waiting child")
+	check(bad_events.size() == 1 and bad_events[0][0] == M.IGNORES_ZEBRA and bad_events[0][2] == false,
+			"child who waited gets praise (%s)" % str(bad_events))
+	check(level.dodged_bad_actors == 1 and level.rules.lives == 3, "praise is counted, no life lost")
+	check(_violations.is_empty(), "waiting safely is not a violation")
+	await _unload(level)
+
+	# A distracted driver has to brake hard for the child: a close call, but no life lost.
+	var unmarked := _custom_level(true)
+	unmarked.junction_control = LevelData.JunctionControl.PRIORITY_ROAD
+	unmarked.crossing_type = LevelData.CrossingType.NONE
+	level = await _load_level(unmarked)
+	level._on_popup_action("start")
+	traffic = level.traffic
+	courier = level.courier
+	lane = traffic.lanes[2]
+	var player_pos := Vector3(-7.25, 0, 1.75)
+	var phone := traffic._spawn_vehicle(lane, VehicleSpec.create("car", 8.33, traffic.rng, false))
+	phone.spec.make_bad(M.DISTRACTED, traffic.rng)
+	phone.spec.reaction_time = 1.6
+	phone.offset = lane.project(player_pos).x - 20.0 - phone.spec.length * 0.5
+	phone.speed = 8.33
+	_violations.clear()
+	bad_events.clear()
+	courier.teleport(player_pos, Vector3.BACK)
+	await _physics_frames(150)
+	check(not _violations.has(RuleBook.Violation.FORCED_BRAKE), "no police stop when a rule breaker brakes for you")
+	check(not _violations.has(RuleBook.Violation.COLLISION), "the distracted driver still stops in time")
+	check(bad_events.size() >= 1 and bad_events[0][2] == true, "close call is reported (%s)" % str(bad_events))
+	check(level.rules.lives == 3, "no life lost (lives %d)" % level.rules.lives)
+	await _unload(level)
+
+	# Side-street driver who does not give way: ignores a cyclist on the main road, not other cars.
+	var priority_bike := _custom_level(true)
+	priority_bike.stage = LevelData.Stage.BIKE
+	priority_bike.junction_control = LevelData.JunctionControl.PRIORITY_ROAD
+	priority_bike.crossing_type = LevelData.CrossingType.ZEBRA
+	priority_bike.start_spot = "W-S-30"
+	level = await _load_level(priority_bike)
+	level._on_popup_action("start")
+	traffic = level.traffic
+	level.courier.teleport(Vector3(-2.0, 0, 5.0), Vector3.RIGHT)   # cycling across the junction
+	await _physics_frames(2)
+	var careful := traffic._spawn_vehicle(traffic.lanes[0], VehicleSpec.create("car", 8.33, traffic.rng, false))
+	careful.offset = careful.lane.def.stop_offset - 3.0
+	var pusher := traffic._spawn_vehicle(traffic.lanes[1], VehicleSpec.create("car", 8.33, traffic.rng, false))
+	pusher.spec.make_bad(M.IGNORES_PRIORITY, traffic.rng)
+	pusher.offset = pusher.lane.def.stop_offset - 3.0
+	check(not traffic.is_clear_for(careful), "careful side-street driver waits for the cyclist")
+	check(traffic.must_stop_at_line(careful) and not traffic.must_stop_at_line(pusher),
+			"the rule breaker pulls out anyway")
+	await _unload(level)
+
+	# Hit by a rule breaker: the failed screen explains what they did wrong.
+	level = await _load_level(lights_level)
+	level._on_popup_action("start")
+	EventBus.violation.emit(RuleBook.Violation.COLLISION, {"by": "auto", "bad": M.RUNS_RED})
+	await _physics_frames(1)
+	var subtitle: String = level.popup.get_node("%Subtitle").text
+	check(subtitle == RuleBook.bad_actor_text(M.RUNS_RED, "title", "auto"), "failed screen names the red-light runner (%s)" % subtitle)
+	await _unload(level)
+
+	# Look left and right: crossing without looking gives a tip (no life lost), looking first does not.
+	level = await _load_level(zebra)
+	level._on_popup_action("start")
+	courier = level.courier
+	_violations.clear()
+	courier.teleport(Vector3(-7.25, 0, -4.9), Vector3.BACK)   # waiting area, facing across the road
+	level.monitor.reset()
+	await _physics_frames(10)
+	courier.teleport(Vector3(-7.25, 0, -2.0), Vector3.BACK)   # onto the crossing, without looking
+	await _physics_frames(5)
+	check(_violations.has(RuleBook.Violation.NO_LOOK) and level.monitor.not_looked_count == 1, "crossing without looking is noticed")
+	check(level.rules.lives == 3, "not looking is a tip, not a police stop")
+	courier.teleport(Vector3(-7.25, 0, -4.9), Vector3.BACK)
+	level.monitor.reset()
+	await _look_both_ways(courier, StreetLayout.Axis.EW)
+	courier.heading = atan2(0.0, -1.0)   # face across the road again
+	await _physics_frames(5)
+	courier.teleport(Vector3(-7.25, 0, -2.0), Vector3.BACK)
+	await _physics_frames(5)
+	check(level.monitor.not_looked_count == 1, "looking left and right first is fine (count %d)" % level.monitor.not_looked_count)
+	await _unload(level)
+
+	EventBus.bad_actor.disconnect(on_bad)
+
+	# Stress test: half of all road users break the rules, AI vehicles still never crash.
+	if not OS.has_environment("SKIP_TRAFFIC"):
+		for base: LevelData in [GameState.levels[9], GameState.levels[13], GameState.levels[4], GameState.levels[29]]:
+			var d: LevelData = base.duplicate()
+			d.bad_actor_chance = 0.5
+			await _simulate_traffic(d, base.level_id() + "!", base.title + " (50% rule breakers)")
 
 
 func _ride_to(c: Courier, target: Vector3, speed: float, traffic: TrafficManager = null) -> void:
@@ -540,6 +737,13 @@ func _road_clear_at(traffic: TrafficManager, z: float) -> bool:
 			if (z - vz) * lane.def.dir.y > 0.0 and absf(vz - z) < 40.0:
 				return false
 	return true
+
+
+func _look_both_ways(c: Courier, road_axis: int) -> void:
+	var road := Vector3(0, 0, 1) if road_axis == StreetLayout.Axis.NS else Vector3(1, 0, 0)
+	for d: Vector3 in [road, -road, road]:
+		c.heading = atan2(-d.x, -d.z)
+		await _physics_frames(12)
 
 
 func _walk_to(courier: Courier, target: Vector3) -> int:

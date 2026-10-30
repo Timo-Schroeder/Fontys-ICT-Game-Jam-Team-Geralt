@@ -11,6 +11,7 @@ briefing = "Er komen hulpdiensten langs. Hoor je een sirene? Stop op het fietspa
 lesson = "Bij een sirene stop je en laat je de hulpdienst voorgaan."
 car_density = 0.35
 emergency_times = PackedFloat32Array(25, 70)
+bad_actor_chance = 0.05
 start_spot = "S-E-40"
 pickup_spot = "N-E-30"
 delivery_spot = "S-W-35"

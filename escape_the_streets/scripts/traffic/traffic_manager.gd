@@ -12,6 +12,8 @@ const MINOR_ROAD_SHARE := 0.4
 
 ## 0 = different traffic every attempt. Set a number for repeatable traffic (testing/balancing).
 @export var fixed_seed := 0
+## Testing aid: put a red "!" above road users who break the rules.
+@export var show_bad_actors := false
 
 var layout: StreetLayout
 var level: LevelData
@@ -109,6 +111,13 @@ func must_stop_at_line(v: Vehicle) -> bool:
 		var state := lights.vehicle_state(v.lane.def.axis)
 		if state == TrafficLightController.Light.GREEN:
 			return false
+		if v.spec.misbehaviour == VehicleSpec.Misbehaviour.RUNS_RED:
+			# Decide once, just before a good driver would start to brake: run the red light
+			# if no other vehicle can get in the way. (The player is "not seen".)
+			if v.red_decision == 0 and dist < maxf(v.speed * 3.0, 8.0):
+				v.red_decision = 1 if is_clear_for(v, true) else -1
+			if v.red_decision == 1:
+				return false
 		var need := v.speed * v.speed / (2.0 * maxf(dist, 0.05))
 		if state == TrafficLightController.Light.YELLOW:
 			return need <= v.spec.comfort_decel * 1.2   # too close to stop: drive on
@@ -116,7 +125,7 @@ func must_stop_at_line(v: Vehicle) -> bool:
 	# Priority road: east-west has right of way, north-south gives way (haaientanden).
 	if v.lane.def.axis == StreetLayout.Axis.EW:
 		return false
-	return not is_clear_for(v)
+	return not is_clear_for(v, v.spec.misbehaviour == VehicleSpec.Misbehaviour.IGNORES_PRIORITY)
 
 
 ## Is a vehicle from the crossing road still on the junction, and not yet past my lane?
@@ -144,13 +153,15 @@ func speed_cap_for(v: Vehicle) -> float:
 ## Can a give-way vehicle cross the junction safely?
 ## For every main-road lane it must cross, it compares "how long until I am completely past
 ## that lane" with "how long until the next main-road vehicle gets there" (gap acceptance).
-func is_clear_for(v: Vehicle) -> bool:
+## ignore_player: a rule breaker who does not look out for the player.
+func is_clear_for(v: Vehicle, ignore_player: bool = false) -> bool:
 	var my := v.lane.def
 	# Do not drive onto the junction if the exit is blocked by a pedestrian on the zebra.
-	for entry: Dictionary in my.crossings:
-		var c: StreetLayout.Crossing = entry["crossing"]
-		if entry["enter"] > my.junction_exit - 0.1 and c.type == LevelData.CrossingType.ZEBRA and c.claimed:
-			return false
+	if v.spec.misbehaviour != VehicleSpec.Misbehaviour.IGNORES_ZEBRA:
+		for entry: Dictionary in my.crossings:
+			var c: StreetLayout.Crossing = entry["crossing"]
+			if entry["enter"] > my.junction_exit - 0.1 and c.type == LevelData.CrossingType.ZEBRA and c.claimed:
+				return false
 	var my_half := v.spec.width * 0.5
 	# Drivers who have waited a long time accept slightly smaller gaps.
 	var margin := lerpf(SAFETY_MARGIN, 0.3, clampf(v.waiting_time / 20.0, 0.0, 1.0))
@@ -170,7 +181,7 @@ func is_clear_for(v: Vehicle) -> bool:
 			if _time_to_cover(d, o.speed, o.spec.accel, o.spec.max_speed) < t_clear + margin:
 				return false
 	# The player riding or driving on the main road also has right of way.
-	if player_active and player.mode != Courier.Mode.WALK:
+	if player_active and player.mode != Courier.Mode.WALK and not ignore_player:
 		var p := StreetLayout.to_2d(player.global_position)
 		if layout.in_conflict_zone(p):
 			return false
@@ -206,7 +217,13 @@ static func _time_to_cover(d: float, v0: float, a: float, vmax: float) -> float:
 func report_violation(type: int, by: Vehicle) -> void:
 	if not player_active:
 		return
-	EventBus.violation.emit(type, {"by": by.spec.display_name, "position": by.global_position})
+	var m := by.spec.misbehaviour
+	if m != VehicleSpec.Misbehaviour.NONE and type in [RuleBook.Violation.FORCED_BRAKE, RuleBook.Violation.BLOCKING_TRAFFIC]:
+		# A rule breaker had to brake for you: that is their fault, so no police stop,
+		# but it was a close call worth explaining.
+		EventBus.bad_actor.emit(m, by.spec.display_name, true)
+		return
+	EventBus.violation.emit(type, {"by": by.spec.display_name, "position": by.global_position, "bad": m})
 
 
 # --- Push buttons ------------------------------------------------------------------
@@ -278,6 +295,7 @@ func _spawn(lane: TrafficLane, delta: float) -> void:
 		return
 	var kind := _pick_road_kind(lane) if is_road else _pick_bike_kind()
 	var spec := VehicleSpec.create(kind, speed_limit, rng, wet)
+	_maybe_make_bad(spec, lane)
 	if lane.entry_space() < spec.length + 4.0:
 		lane.spawn_timer = 0.5
 		return
@@ -312,6 +330,34 @@ func _despawn(lane: TrafficLane) -> void:
 			if _emergencies.is_empty():
 				EventBus.emergency_state_changed.emit(false)
 		v.queue_free()
+
+
+## With a small chance (LevelData.bad_actor_chance) a new road user becomes a rule breaker.
+## Only misbehaviours that make sense at this junction are picked.
+func _maybe_make_bad(spec: VehicleSpec, lane: TrafficLane) -> void:
+	if level.bad_actor_chance <= 0.0 or spec.kind not in VehicleSpec.CAN_MISBEHAVE:
+		return
+	if rng.randf() >= level.bad_actor_chance:
+		return
+	var options := {}   # misbehaviour -> weight
+	if lights:
+		options[VehicleSpec.Misbehaviour.RUNS_RED] = 4
+	else:
+		if level.crossing_type == LevelData.CrossingType.ZEBRA:
+			options[VehicleSpec.Misbehaviour.IGNORES_ZEBRA] = 3
+		if lane.def.axis == StreetLayout.Axis.NS:
+			options[VehicleSpec.Misbehaviour.IGNORES_PRIORITY] = 3
+	options[VehicleSpec.Misbehaviour.SPEEDING] = 2
+	options[VehicleSpec.Misbehaviour.DISTRACTED] = 1
+	var total := 0
+	for w: int in options.values():
+		total += w
+	var r := rng.randi_range(1, total)
+	for m: int in options:
+		r -= options[m]
+		if r <= 0:
+			spec.make_bad(m, rng)
+			return
 
 
 func _pick_road_kind(lane: TrafficLane) -> String:

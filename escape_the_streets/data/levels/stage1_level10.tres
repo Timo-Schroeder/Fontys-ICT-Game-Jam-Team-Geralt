@@ -19,6 +19,7 @@ race_group_share = 0.1
 emergency_times = PackedFloat32Array(45)
 walkers = 5
 runners = 3
+bad_actor_chance = 0.06
 pickup_spot = "N-E-30"
 delivery_spot = "S-E-30"
 pickup_name = "Postkantoor"

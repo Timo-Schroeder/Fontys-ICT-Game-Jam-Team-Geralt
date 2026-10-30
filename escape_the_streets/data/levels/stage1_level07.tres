@@ -9,6 +9,7 @@ title = "Sirene!"
 briefing = "Vandaag rijden er ambulances en brandweerauto's. Hoor je een sirene? Blijf op de stoep staan, ook als jouw licht groen is."
 lesson = "Hoor je een sirene of zie je blauwe lichten? Blijf van de weg en laat de hulpdienst voorgaan."
 emergency_times = PackedFloat32Array(20, 75)
+bad_actor_chance = 0.04
 start_spot = "W-S-30"
 pickup_spot = "E-S-30"
 delivery_spot = "E-N-34"

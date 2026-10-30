@@ -15,6 +15,7 @@ car_density = 0.25
 bike_density = 0.22
 bus_share = 0.1
 emergency_times = PackedFloat32Array()
+bad_actor_chance = 0.05
 start_spot = "N-E-30"
 pickup_spot = "S-E-30"
 delivery_spot = "S-W-26"

@@ -51,6 +51,12 @@ enum CrossingType { SIGNAL, ZEBRA, NONE }
 @export_range(0, 20) var walkers: int = 2
 @export_range(0, 10) var runners: int = 0
 
+@export_group("Bad actors")
+## Chance (0..1) that a new car, motorbike or cyclist breaks the rules: runs a red light,
+## ignores the zebra crossing, does not give way, speeds or looks at a phone.
+## Keep it low (0.02 - 0.06): children should learn to stay alert, not to be afraid.
+@export_range(0.0, 0.3, 0.01) var bad_actor_chance: float = 0.0
+
 @export_group("Route")
 ## Spot format: ARM-SIDE-DISTANCE, e.g. "S-W-30" = south arm, west side, 30 m from the crossroads.
 ## Arms N/S take side W or E; arms E/W take side N or S. Distance 16..60.

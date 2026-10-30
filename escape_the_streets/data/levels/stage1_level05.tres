@@ -14,6 +14,7 @@ building_setback = 6.0
 car_density = 0.18
 bike_density = 0.2
 emergency_times = PackedFloat32Array()
+bad_actor_chance = 0.03
 start_spot = "E-N-30"
 pickup_spot = "W-N-28"
 delivery_spot = "W-S-34"

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/ui/compass.gd" id="2_compass"]
-[ext_resource type="Script" path="res://scripts/ui/star_bar.gd" id="3_stars"]
+[ext_resource type="Script" path="res://scripts/ui/heart_bar.gd" id="3_lives"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 16.0
@@ -117,12 +117,12 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 layout_mode = 2
 mouse_filter = 2
 
-[node name="Stars" type="Control" parent="Root/TopRight/VBox"]
+[node name="Lives" type="Control" parent="Root/TopRight/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(150, 44)
 layout_mode = 2
 mouse_filter = 2
-script = ExtResource("3_stars")
+script = ExtResource("3_lives")
 
 [node name="TimeLabel" type="Label" parent="Root/TopRight/VBox"]
 unique_name_in_owner = true

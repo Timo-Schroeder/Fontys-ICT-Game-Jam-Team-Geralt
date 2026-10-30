@@ -12,6 +12,7 @@ lesson = "Rechtsaf slaan: eerst fietsers en voetgangers die rechtdoor gaan voor 
 bike_density = 0.6
 fatbike_share = 0.3
 emergency_times = PackedFloat32Array()
+bad_actor_chance = 0.04
 start_spot = "S-E-45"
 pickup_spot = "E-S-30"
 delivery_spot = "W-N-35"

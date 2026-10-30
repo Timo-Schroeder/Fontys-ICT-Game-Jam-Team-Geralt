@@ -9,6 +9,7 @@ signal action(id: String)
 @onready var _subtitle: Label = %Subtitle
 @onready var _body: Label = %Body
 @onready var _stars: Control = %PopupStars
+@onready var _lives: Control = %PopupLives
 @onready var _buttons: HBoxContainer = %Buttons
 @onready var _panel: PanelContainer = %Panel
 
@@ -21,42 +22,72 @@ func _ready() -> void:
 
 
 func show_briefing(level: LevelData) -> void:
+	var warning := ""
+	if level.bad_actor_chance > 0.0:
+		warning = "\n\nLet op: niet iedereen houdt zich aan de regels! Kijk altijd of auto's en fietsers echt stoppen."
 	_open("Level %s  •  %s" % [level.level_id(), level.stage_name()], level.title,
-			level.briefing + "\n\nBreng het pakketje van A naar B en dan naar C. Veilig is belangrijker dan snel!",
-			Color("ffd38a"), -1, [["start", "Start!"]])
+			level.briefing + warning + "\n\nBreng het pakketje van A naar B en dan naar C. Je hebt 3 levens: "
+			+ "elke keer dat de politie je aanhoudt, ben je er een kwijt. Elk leven dat je overhoudt, wordt een ster!",
+			Color("ffd38a"), -1, [["start", "Start!"]], 3)
 
 
-func show_police(type: int, stars_left: int) -> void:
+func show_police(type: int, lives_left: int) -> void:
 	var info := RuleBook.info(type)
 	var extra := "\n\nDe politie brengt je terug naar een veilige plek." if type in RuleBook.MOVE_TO_SAFE_SPOT else ""
-	if stars_left <= 0:
-		extra += "\n\nJe hebt geen sterren meer."
-	_open("Politie!", info["title"], info["text"] + extra, Color("6fa8ff"), stars_left,
-			[["continue", "Ik snap het" if stars_left > 0 else "Verder"]])
+	extra += "\n\n" + _lives_text(lives_left)
+	_open("Politie!", info["title"], info["text"] + extra, Color("6fa8ff"), -1,
+			[["continue", "Ik snap het" if lives_left > 0 else "Verder"]], lives_left)
 
 
-func show_fail(type: int, by: String = "") -> void:
+## context: {"by": "auto", "bad": VehicleSpec.Misbehaviour} for collisions.
+func show_fail(type: int, context: Dictionary = {}) -> void:
 	var info := RuleBook.info(type)
 	var title: String = info["title"]
+	var text: String = info["text"]
+	var by: String = context.get("by", "")
+	var bad: int = context.get("bad", VehicleSpec.Misbehaviour.NONE)
 	if type == RuleBook.Violation.COLLISION and by != "":
 		title = "Botsing met een %s!" % by
-	_open("Level mislukt", title, info["text"], Color("ff7b6b"), -1,
+		if bad != VehicleSpec.Misbehaviour.NONE:
+			# Hit by someone who broke the rules: explain what they did wrong
+			# and what the child can do to stay safe anyway.
+			title = RuleBook.bad_actor_text(bad, "title", by)
+			text = RuleBook.bad_actor_text(bad, "fail", by)
+	_open("Level mislukt", title, text, Color("ff7b6b"), -1,
 			[["retry", "Opnieuw"], ["menu", "Menu"]])
 
 
-func show_out_of_stars() -> void:
-	_open("Level mislukt", "Te vaak aangehouden",
+func show_out_of_lives() -> void:
+	_open("Level mislukt", "Geen levens meer",
 			"Je bent drie keer door de politie aangehouden. Probeer het nog een keer en let goed op de regels.",
-			Color("ff7b6b"), 0, [["retry", "Opnieuw"], ["menu", "Menu"]])
+			Color("ff7b6b"), -1, [["retry", "Opnieuw"], ["menu", "Menu"]], 0)
 
 
-func show_success(level: LevelData, stars: int, has_next: bool) -> void:
+## stars = the lives you still had when you delivered the package.
+## summary: {"dodged": rule breakers you safely waited for, "not_looked": crossings without looking}
+func show_success(level: LevelData, stars: int, has_next: bool, summary: Dictionary = {}) -> void:
 	var lesson := level.lesson if level.lesson != "" else "Goed gedaan!"
 	var buttons := [["retry", "Nog een keer"], ["menu", "Menu"]]
 	if has_next:
 		buttons.push_front(["next", "Volgend level"])
+	var earned := "Je had nog %s over, dus je krijgt %d %s." % [
+			"1 leven" if stars == 1 else "%d levens" % stars, stars, "ster" if stars == 1 else "sterren"]
+	var dodged: int = summary.get("dodged", 0)
+	var not_looked: int = summary.get("not_looked", 0)
+	if dodged > 0:
+		earned += "\nJe hebt %s gewacht voor iemand die zich niet aan de regels hield. Slim!" % (
+				"1 keer" if dodged == 1 else "%d keer" % dodged)
+	if not_looked > 0:
+		earned += "\nJe bent %s overgestoken zonder eerst links en rechts te kijken." % (
+				"1 keer" if not_looked == 1 else "%d keer" % not_looked)
 	_open("Pakketje bezorgd!", ["Dat kan veiliger...", "Netjes!", "Goed gedaan!", "Perfect! Superveilig!"][stars],
-			"Onthoud: " + lesson, Color("7be08a"), stars, buttons)
+			earned + "\n\nOnthoud: " + lesson, Color("7be08a"), stars, buttons)
+
+
+static func _lives_text(lives_left: int) -> String:
+	if lives_left <= 0:
+		return "Je hebt geen levens meer."
+	return "Je hebt nog 1 leven." if lives_left == 1 else "Je hebt nog %d levens." % lives_left
 
 
 func show_pause() -> void:
@@ -69,7 +100,8 @@ func close() -> void:
 	get_tree().paused = false
 
 
-func _open(header: String, subtitle: String, body: String, color: Color, stars: int, buttons: Array) -> void:
+## stars / lives: how many to show, or -1 to hide that row.
+func _open(header: String, subtitle: String, body: String, color: Color, stars: int, buttons: Array, lives: int = -1) -> void:
 	is_open = true
 	visible = true
 	get_tree().paused = true
@@ -83,6 +115,9 @@ func _open(header: String, subtitle: String, body: String, color: Color, stars: 
 	_stars.visible = stars >= 0
 	if stars >= 0:
 		_stars.stars = stars
+	_lives.visible = lives >= 0
+	if lives >= 0:
+		_lives.set("lives", lives)
 	for child in _buttons.get_children():
 		child.queue_free()
 	var first: Button = null

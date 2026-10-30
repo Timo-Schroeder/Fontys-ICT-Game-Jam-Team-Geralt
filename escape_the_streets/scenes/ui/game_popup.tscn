@@ -1,7 +1,8 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/game_popup.gd" id="1_popup"]
 [ext_resource type="Script" path="res://scripts/ui/star_bar.gd" id="2_stars"]
+[ext_resource type="Script" path="res://scripts/ui/heart_bar.gd" id="3_lives"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_popup"]
 content_margin_left = 36.0
@@ -79,6 +80,13 @@ custom_minimum_size = Vector2(220, 64)
 layout_mode = 2
 size_flags_horizontal = 4
 script = ExtResource("2_stars")
+
+[node name="PopupLives" type="Control" parent="Center/Panel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 58)
+layout_mode = 2
+size_flags_horizontal = 4
+script = ExtResource("3_lives")
 
 [node name="Buttons" type="HBoxContainer" parent="Center/Panel/VBox"]
 unique_name_in_owner = true

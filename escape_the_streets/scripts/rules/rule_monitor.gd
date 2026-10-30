@@ -6,6 +6,14 @@ extends Node
 ##
 ## Each check is a small "condition held for N seconds" timer, so brushing
 ## the edge of a bike path for one frame does not count as walking on it.
+##
+## It also remembers where the player looked in the last few seconds, to check that
+## they looked left and right before stepping onto a crossing.
+
+## How far back (seconds) a look counts, and how far you must turn towards the traffic
+## (dot product with the road direction: 0.6 = turned at least ~37 degrees from straight across).
+const LOOK_WINDOW := 5.0
+const LOOK_DOT := 0.6
 
 var layout: StreetLayout
 var player: Courier
@@ -19,6 +27,11 @@ var _timers: Dictionary = {}
 var _prev: StreetLayout.SurfaceInfo
 var _was_in_conflict := false
 var _safe_timer := 0.0
+var _clock := 0.0
+var _views: Array = []   ## [time, Vector2 view direction]
+var _praised_look := false
+## How often the player crossed without looking (for the end screen).
+var not_looked_count := 0
 
 
 func setup(p_layout: StreetLayout, p_player: Courier, p_traffic: TrafficManager, p_level: LevelData) -> void:
@@ -38,11 +51,17 @@ func set_safe_spot(pos: Vector3, dir: Vector3) -> void:
 func reset() -> void:
 	_timers.clear()
 	_prev = null
+	_views.clear()
 	_was_in_conflict = layout.in_conflict_zone(StreetLayout.to_2d(player.global_position))
 
 
 ## Returns what the player is standing on (the level uses it for hints).
 func tick(delta: float) -> StreetLayout.SurfaceInfo:
+	_clock += delta
+	var view := player.view_direction()
+	_views.append([_clock, Vector2(view.x, view.z)])
+	while not _views.is_empty() and _clock - float(_views[0][0]) > LOOK_WINDOW:
+		_views.pop_front()
 	var p := StreetLayout.to_2d(player.global_position)
 	var info := layout.classify(p)
 	var v3 := player.get_real_velocity()
@@ -68,12 +87,21 @@ func tick(delta: float) -> StreetLayout.SurfaceInfo:
 func _check_walk(info: StreetLayout.SurfaceInfo, delta: float) -> void:
 	_fire_after("road", info.surface == StreetLayout.Surface.ROAD, delta, 0.35, RuleBook.Violation.WALKING_ON_ROAD)
 	_fire_after("bikepath", info.surface == StreetLayout.Surface.BIKE_PATH, delta, 0.6, RuleBook.Violation.WALKING_ON_BIKE_PATH)
-	# Stepping onto the car lanes of a signalled crossing while the pedestrian light is not green.
-	if info.surface == StreetLayout.Surface.CROSSING and info.on_crossing_road \
-			and info.crossing.type == LevelData.CrossingType.SIGNAL and traffic.lights:
+	if info.surface == StreetLayout.Surface.CROSSING and info.on_crossing_road:
 		var entering := _prev == null or _prev.crossing != info.crossing or not _prev.on_crossing_road
-		if entering and traffic.lights.ped_state(info.crossing) != TrafficLightController.Light.GREEN:
-			_violate(RuleBook.Violation.RED_LIGHT)
+		if entering:
+			# Did you look left and right before stepping onto the road? (A tip, not a penalty.)
+			if looked_both_ways(info.crossing.road_axis):
+				if not _praised_look:
+					_praised_look = true
+					EventBus.hint.emit("Goed gekeken!", 2.0)
+			else:
+				not_looked_count += 1
+				_violate(RuleBook.Violation.NO_LOOK)
+			# Stepping onto the car lanes of a signalled crossing while the pedestrian light is not green.
+			if info.crossing.type == LevelData.CrossingType.SIGNAL and traffic.lights \
+					and traffic.lights.ped_state(info.crossing) != TrafficLightController.Light.GREEN:
+				_violate(RuleBook.Violation.RED_LIGHT)
 
 
 func _check_bike(info: StreetLayout.SurfaceInfo, p: Vector2, vel: Vector2, delta: float) -> void:
@@ -119,6 +147,18 @@ func _check_red_light_entering_junction(p: Vector2, vel: Vector2) -> void:
 		var axis := StreetLayout.Axis.NS if absf(vel.y) > absf(vel.x) else StreetLayout.Axis.EW
 		if traffic.lights.vehicle_state(axis) == TrafficLightController.Light.RED:
 			_violate(RuleBook.Violation.RED_LIGHT)
+
+
+## Did the player look along the road both ways in the last LOOK_WINDOW seconds?
+func looked_both_ways(road_axis: int) -> bool:
+	var road := Vector2(0, 1) if road_axis == StreetLayout.Axis.NS else Vector2(1, 0)
+	var one_way := false
+	var other_way := false
+	for entry: Array in _views:
+		var d: Vector2 = entry[1]
+		one_way = one_way or d.dot(road) > LOOK_DOT
+		other_way = other_way or d.dot(-road) > LOOK_DOT
+	return one_way and other_way
 
 
 func _fire_after(key: String, active: bool, delta: float, seconds: float, violation: int) -> void:

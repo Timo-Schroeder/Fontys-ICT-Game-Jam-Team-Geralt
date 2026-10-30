@@ -3,9 +3,9 @@ extends CharacterBody3D
 ## The player: a delivery courier on foot, on a bike, or in a delivery van.
 ## One body, three movement modes. Each stage simply calls set_mode().
 ##
-## Views:
-##   On foot - third person; the mouse turns you and tilts the camera up and down.
-##   Bike    - first person; A/D steer, the mouse turns your head (look over your shoulder!).
+## Views (all first person, so you see the street the way a child does):
+##   On foot - eyes at child height; the mouse turns you (like any first-person game) and looks up/down.
+##   Bike    - A/D steer, the mouse turns your head (look over your shoulder!).
 ##   Van     - first person from the driver's seat (left, as in the Netherlands); A/D steer,
 ##             the mouse turns your head. The van has no rear window: use the side mirrors.
 ## C (or the middle mouse button) looks straight ahead again.
@@ -28,7 +28,7 @@ const HEAD_YAW_LIMIT := {Mode.BIKE: deg_to_rad(150.0), Mode.CAR: deg_to_rad(140.
 const HEAD_PITCH_MIN := deg_to_rad(-70.0)
 const HEAD_PITCH_MAX := deg_to_rad(55.0)
 ## Default head/camera tilt per mode (slightly down, at the road).
-const DEFAULT_PITCH := {Mode.WALK: -0.32, Mode.BIKE: -0.12, Mode.CAR: -0.08}
+const DEFAULT_PITCH := {Mode.WALK: -0.1, Mode.BIKE: -0.12, Mode.CAR: -0.08}
 
 @export var mouse_sensitivity := 0.0025
 ## Slowly turn the head back to the front while riding/driving. Off: you look where you left it.
@@ -99,7 +99,7 @@ func set_mode(m: Mode) -> void:
 			_shape.shape = capsule
 			_shape.position = Vector3(0, 0.75, 0)
 			_build_walker()
-			_set_camera(Vector3(0, 1.6, 0), 4.0, false)
+			_set_camera(Vector3(0, 1.35, 0), 0.0, true)   # a child's eye height
 		Mode.BIKE:
 			var box := BoxShape3D.new()
 			box.size = Vector3(0.6, 1.6, 1.8)
@@ -119,7 +119,7 @@ func set_mode(m: Mode) -> void:
 
 
 func is_first_person() -> bool:
-	return mode != Mode.WALK
+	return camera.cull_mask & LAYER_OWN_BODY == 0
 
 
 ## Half length and half width of the player's footprint.
@@ -179,8 +179,8 @@ func add_look(relative: Vector2) -> void:
 	var dx := relative.x * mouse_sensitivity
 	var dy := relative.y * mouse_sensitivity
 	if mode == Mode.WALK:
-		heading -= dx
-		look_pitch = clampf(look_pitch - dy, -1.1, 0.15)
+		heading -= dx   # on foot you turn your whole body
+		look_pitch = clampf(look_pitch - dy, HEAD_PITCH_MIN, HEAD_PITCH_MAX)
 	else:
 		var limit: float = HEAD_YAW_LIMIT[mode]
 		look_yaw = clampf(look_yaw - dx, -limit, limit)
@@ -320,7 +320,8 @@ func _check_crash() -> void:
 		var other := col.get_collider()
 		var impact := absf(forward_speed)
 		if other is Vehicle and impact > 1.5:
-			EventBus.violation.emit(RuleBook.Violation.COLLISION, {"by": (other as Vehicle).spec.display_name})
+			var spec := (other as Vehicle).spec
+			EventBus.violation.emit(RuleBook.Violation.COLLISION, {"by": spec.display_name, "bad": spec.misbehaviour})
 		elif mode == Mode.CAR and impact > 3.5:
 			EventBus.violation.emit(RuleBook.Violation.COLLISION, {"by": "muur"})
 		forward_speed *= 0.2
@@ -348,11 +349,24 @@ static func _set_layers(node: Node, layer: int) -> void:
 # --- Greybox visuals ---------------------------------------------------------------
 
 func _build_walker() -> void:
-	var uniform := Color("ff7a00")
-	Greybox.person(_visual, uniform, 1.45)
+	# The body is seen by others (and as your shadow), not by your own first-person camera.
+	var body := Node3D.new()
+	_visual.add_child(body)
+	Greybox.person(body, Color("ff7a00"), 1.45)
 	# Thermal delivery backpack (the back is +Z).
-	Greybox.box(_visual, Vector3(0.32, 0.34, 0.2), Vector3(0, 1.0, 0.27), Greybox.mat(Color("0f7f76")))
-	_package = Greybox.box(_visual, Vector3(0.35, 0.25, 0.3), Vector3(0, 0.85, -0.38), Greybox.mat(Color("c98b45")))
+	Greybox.box(body, Vector3(0.32, 0.34, 0.2), Vector3(0, 1.0, 0.27), Greybox.mat(Color("0f7f76")))
+	_set_layers(body, LAYER_OWN_BODY)
+	# Once picked up, you see the package in your hands at the bottom of the screen.
+	_package = Node3D.new()
+	_package.position = Vector3(0, 0.88, -0.36)
+	_visual.add_child(_package)
+	Greybox.box(_package, Vector3(0.28, 0.18, 0.22), Vector3.ZERO, Greybox.mat(Color("c98b45")))
+	Greybox.box(_package, Vector3(0.29, 0.03, 0.23), Vector3.ZERO, Greybox.mat(Color("8a5a22")))   # tape
+	var skin := Greybox.mat(Color("e8c4a0"))
+	for x: float in [-0.16, 0.16]:
+		Greybox.sphere(_package, 0.04, Vector3(x, 0.0, 0.03), skin)
+		var arm := Greybox.capsule(_package, 0.03, 0.3, Vector3(x * 1.1, 0.04, 0.18), Greybox.mat(Color("ff7a00")))
+		arm.rotation.x = 1.2
 
 
 func _build_bike() -> void:

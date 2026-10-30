@@ -11,6 +11,7 @@ briefing = "Bij oranje stop je als dat nog veilig kan. Bij rood stop je altijd v
 lesson = "Oranje betekent: stoppen als dat veilig kan. Rood betekent: altijd stoppen."
 car_density = 0.35
 emergency_times = PackedFloat32Array()
+bad_actor_chance = 0.04
 start_spot = "W-S-45"
 pickup_spot = "E-S-30"
 delivery_spot = "W-N-35"

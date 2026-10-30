@@ -23,6 +23,10 @@ var state := State.BRIEFING
 var time_left := 0.0
 var has_package := false
 
+## Rule breakers that passed close by while you waited safely / that had to brake for you.
+var dodged_bad_actors := 0
+var close_calls := 0
+
 var _pending_fail := false
 var _pending_teleport := false
 
@@ -60,12 +64,13 @@ func _ready() -> void:
 	courier.interact_pressed.connect(_on_interact)
 
 	hud.setup(data, mode)
-	hud.set_stars(rules.stars)
+	hud.set_lives(rules.lives)
 	time_left = data.time_limit
 	_update_objective()
 	hud.update_status(time_left, courier, _target().pad_center, data.speed_limit_kmh)
 
 	popup.action.connect(_on_popup_action)
+	EventBus.bad_actor.connect(_on_bad_actor)
 	EventBus.level_started.emit(data)
 	popup.show_briefing(data)
 
@@ -84,7 +89,7 @@ func _physics_process(delta: float) -> void:
 	_update_hints(info)
 	hud.update_status(time_left, courier, _target().pad_center, data.speed_limit_kmh)
 	if time_left <= 0.0 and state == State.PLAYING:
-		_fail(RuleBook.Violation.TIME_UP, "")
+		_fail(RuleBook.Violation.TIME_UP, {})
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -102,6 +107,8 @@ func _begin_play() -> void:
 	traffic.player_active = true
 	_give_control()
 	match courier.mode:
+		Courier.Mode.WALK:
+			hud.show_hint("Kijk om je heen met de muis. Voor je oversteekt: kijk links, rechts en weer links!", 6.0)
 		Courier.Mode.BIKE:
 			hud.show_hint("Kijk om je heen met de muis, ook over je schouder. Druk op C om weer vooruit te kijken.", 6.0)
 		Courier.Mode.CAR:
@@ -136,16 +143,16 @@ func _on_popup_action(id: String) -> void:
 				GameState.go_to_menu()
 
 
-func _on_penalty(type: int, severity: int, stars_left: int, context: Dictionary) -> void:
-	hud.set_stars(stars_left)
+func _on_penalty(type: int, severity: int, lives_left: int, context: Dictionary) -> void:
+	hud.set_lives(lives_left)
 	courier.control_enabled = false
 	if severity == RuleBook.Severity.FAIL:
-		_fail(type, context.get("by", ""))
+		_fail(type, context)
 		return
 	state = State.POLICE_STOP
 	_pending_teleport = type in RuleBook.MOVE_TO_SAFE_SPOT
-	_pending_fail = stars_left <= 0
-	popup.show_police(type, stars_left)
+	_pending_fail = lives_left <= 0
+	popup.show_police(type, lives_left)
 
 
 func _after_police_stop() -> void:
@@ -153,7 +160,7 @@ func _after_police_stop() -> void:
 		state = State.ENDED
 		rules.active = false
 		EventBus.level_finished.emit(false, 0)
-		popup.show_out_of_stars()
+		popup.show_out_of_lives()
 		return
 	if _pending_teleport:
 		courier.teleport(monitor.last_safe_position, monitor.last_safe_direction)
@@ -163,22 +170,26 @@ func _after_police_stop() -> void:
 	_give_control()
 
 
-func _fail(type: int, by: String) -> void:
+func _fail(type: int, context: Dictionary) -> void:
 	state = State.ENDED
 	rules.active = false
 	courier.control_enabled = false
 	EventBus.level_finished.emit(false, 0)
-	popup.show_fail(type, by)
+	popup.show_fail(type, context)
 
 
 func _succeed() -> void:
 	state = State.ENDED
 	rules.active = false
 	courier.control_enabled = false
-	var stars := rules.stars
+	# Every life you still have becomes a star in the menu.
+	var stars := rules.lives
 	GameState.record_result(data, stars)
 	EventBus.level_finished.emit(true, stars)
-	popup.show_success(data, stars, GameState.next_level_after(data) != null)
+	popup.show_success(data, stars, GameState.next_level_after(data) != null, {
+		"dodged": dodged_bad_actors,
+		"not_looked": monitor.not_looked_count,
+	})
 
 
 # --- Route A -> B -> C ----------------------------------------------------------------
@@ -218,6 +229,22 @@ func _update_objective() -> void:
 			marker.visible = not has_package
 		else:
 			marker.visible = true
+
+
+# --- Rule breakers ------------------------------------------------------------------------
+
+func _on_bad_actor(m: int, who: String, close_call: bool) -> void:
+	if state != State.PLAYING:
+		return
+	if close_call:
+		close_calls += 1
+		hud.show_hint(RuleBook.bad_actor_text(m, "close", who), 5.0)
+	else:
+		var praise := RuleBook.bad_actor_text(m, "praise", who)
+		if praise == "":
+			return
+		dodged_bad_actors += 1
+		hud.show_hint(praise, 4.0)
 
 
 # --- Hints and interaction ---------------------------------------------------------------

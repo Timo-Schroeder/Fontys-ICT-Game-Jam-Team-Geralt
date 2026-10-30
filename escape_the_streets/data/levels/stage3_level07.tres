@@ -10,6 +10,7 @@ title = "Ruim baan"
 briefing = "Een ambulance met zwaailicht en sirene gaat altijd voor. Stop bij het kruispunt, ook bij groen, en laat hem eerst gaan."
 lesson = "Hulpdiensten met zwaailicht en sirene gaan altijd voor."
 emergency_times = PackedFloat32Array(20, 60)
+bad_actor_chance = 0.05
 start_spot = "S-E-45"
 pickup_spot = "N-E-30"
 delivery_spot = "S-W-35"

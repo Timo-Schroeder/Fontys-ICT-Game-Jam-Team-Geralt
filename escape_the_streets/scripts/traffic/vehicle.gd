@@ -10,6 +10,10 @@ extends AnimatableBody3D
 ##   3. If the player forces it to brake harder than comfortable, report FORCED_BRAKE.
 ## Drivers notice the player only after their reaction time, so stepping out
 ## right in front of a vehicle is dangerous, just like in real life.
+##
+## A few road users break the rules (spec.misbehaviour, see VehicleSpec). They never
+## cost the player a life when they have to brake; if they pass close by while the
+## player waited safely, the player gets praise (EventBus.bad_actor).
 
 const DETECT_RANGE := 60.0
 
@@ -20,7 +24,14 @@ var offset := 0.0
 var speed := 0.0
 ## Seconds this vehicle has been standing still (impatient drivers accept smaller gaps).
 var waiting_time := 0.0
+## Red-light runners decide once: 0 = not yet, 1 = run it, -1 = stop after all.
+var red_decision := 0
 
+## Where (offset) this rule breaker actually broke the rule, or -1.
+var _broke_rule_at := -1.0
+var _closest_to_player := INF
+var _close_call := false
+var _bad_actor_reported := false
 var _player_seen_time := 0.0
 var _player_reported := false
 var _blocked_time := 0.0
@@ -67,7 +78,7 @@ func tick(delta: float, leader: Vehicle) -> void:
 	if fr <= lane.def.stop_offset + 0.3 and traffic.must_stop_at_line(self):
 		other_limit = minf(other_limit, lane.def.stop_offset - fr)
 	# 1c. Zebra crossings with a pedestrian on or next to them (emergency vehicles go on).
-	if not spec.is_emergency:
+	if not spec.is_emergency and spec.misbehaviour != VehicleSpec.Misbehaviour.IGNORES_ZEBRA:
 		for entry: Dictionary in lane.def.crossings:
 			var c: StreetLayout.Crossing = entry["crossing"]
 			if c.type != LevelData.CrossingType.ZEBRA or not c.claimed:
@@ -126,6 +137,7 @@ func tick(delta: float, leader: Vehicle) -> void:
 		if limited_by_player and not player_same_direction and not _player_reported \
 				and need > spec.comfort_decel * 1.4 and v_before > 1.5:
 			_player_reported = true
+			_close_call = spec.misbehaviour != VehicleSpec.Misbehaviour.NONE
 			_react_to_player()
 			var kind := RuleBook.Violation.BLOCKED_EMERGENCY if spec.is_emergency else RuleBook.Violation.FORCED_BRAKE
 			traffic.report_violation(kind, self)
@@ -142,13 +154,62 @@ func tick(delta: float, leader: Vehicle) -> void:
 		_blocked_time = 0.0
 
 	waiting_time = waiting_time + delta if speed < 0.1 else 0.0
+	var front_before := front()
 	offset += speed * delta
 	_place()
+	if spec.misbehaviour != VehicleSpec.Misbehaviour.NONE:
+		_track_rule_breaking(front_before)
 	if spec.is_emergency:
 		_flash_time += delta
 		var on := fmod(_flash_time, 0.5) < 0.25
 		for i in _beacons.size():
 			_beacons[i].visible = on if i % 2 == 0 else not on
+
+
+## Notice the moment this rule breaker actually breaks the rule, then check whether the
+## player was close by and safe (praise) once it has driven on.
+func _track_rule_breaking(front_before: float) -> void:
+	var fr := front()
+	if _broke_rule_at < 0.0:
+		match spec.misbehaviour:
+			VehicleSpec.Misbehaviour.RUNS_RED:
+				if traffic.lights and front_before <= lane.def.stop_offset and fr > lane.def.stop_offset \
+						and traffic.lights.vehicle_state(lane.def.axis) == TrafficLightController.Light.RED:
+					_broke_rule_at = fr
+			VehicleSpec.Misbehaviour.IGNORES_ZEBRA:
+				for entry: Dictionary in lane.def.crossings:
+					var c: StreetLayout.Crossing = entry["crossing"]
+					if c.type == LevelData.CrossingType.ZEBRA and c.claimed \
+							and front_before <= entry["enter"] and fr > entry["enter"]:
+						_broke_rule_at = fr
+			VehicleSpec.Misbehaviour.IGNORES_PRIORITY:
+				# It only broke the rule if a careful driver would have waited for the player.
+				if front_before <= lane.def.junction_enter and fr > lane.def.junction_enter \
+						and traffic.player_active and not traffic.is_clear_for(self):
+					_broke_rule_at = fr
+		return
+	if _bad_actor_reported or not traffic.player_active:
+		return
+	var p: Courier = traffic.player
+	# Walkers only count when they were waiting at (or on) a crossing, not just walking by.
+	if p.mode != Courier.Mode.WALK or _player_at_crossing(p):
+		var gap := p.global_position - global_position
+		_closest_to_player = minf(_closest_to_player, Vector2(gap.x, gap.z).length())
+	if fr < _broke_rule_at + 22.0:
+		return
+	# Driven on: was the player nearby (waiting, or riding towards it) without being hit?
+	_bad_actor_reported = true
+	var nearby := 10.0 if p.mode == Courier.Mode.WALK else 14.0
+	if not _close_call and _closest_to_player < nearby:
+		EventBus.bad_actor.emit(spec.misbehaviour, spec.display_name, false)
+
+
+func _player_at_crossing(p: Courier) -> bool:
+	var p2 := StreetLayout.to_2d(p.global_position)
+	for c in traffic.layout.crossings:
+		if c.claim_rect.grow(1.0).has_point(p2):
+			return true
+	return false
 
 
 ## Distance from our front to an obstacle in our path, or INF if it is not in our path.
@@ -234,6 +295,17 @@ func _build_visual() -> void:
 		_build_bike(visual)
 	else:
 		_build_motor_vehicle(visual)
+	if spec.misbehaviour == VehicleSpec.Misbehaviour.DISTRACTED:
+		_build_phone_glow(visual)
+	if traffic.show_bad_actors and spec.misbehaviour != VehicleSpec.Misbehaviour.NONE:
+		var mark := Label3D.new()
+		mark.text = "! " + VehicleSpec.Misbehaviour.keys()[spec.misbehaviour]
+		mark.modulate = Color("ff3030")
+		mark.font_size = 48
+		mark.pixel_size = 0.01
+		mark.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		mark.position = Vector3(0, spec.height + 0.8, 0)
+		visual.add_child(mark)
 
 
 func _build_motor_vehicle(v: Node3D) -> void:
@@ -303,6 +375,31 @@ func _build_motor_vehicle(v: Node3D) -> void:
 		var roof_y := H + 0.08 if spec.kind != "police" else H + 0.12
 		for x: float in [-W * 0.3, W * 0.3]:
 			_beacons.append(Greybox.box(v, Vector3(0.35, 0.16, 0.25), Vector3(x, roof_y, -L * 0.3), blue))
+
+
+## The tell of a distracted road user: the blue glow of a phone. Riders hold it in their hand;
+## in a car the glow shows on the windscreen and side windows at the driver's seat.
+func _build_phone_glow(v: Node3D) -> void:
+	var glow := Greybox.glow(Color("3aa8ff"), 2.2)
+	if spec.is_bike:
+		Greybox.box(v, Vector3(0.08, 0.13, 0.02), Vector3(0.12, 1.4, -0.3), glow)
+		return
+	if spec.kind == "motorbike":
+		Greybox.box(v, Vector3(0.08, 0.13, 0.02), Vector3(0.18, 1.25, -0.2), glow)
+		return
+	# Same cabin shape as _build_motor_vehicle() for cars and vans.
+	var L := spec.length
+	var W := spec.width
+	var H := spec.height
+	var short_cabin := spec.kind == "car" or spec.kind == "police"
+	var cabin_len := L * (0.55 if short_cabin else 0.75)
+	var cabin_z := 0.2 if short_cabin else 0.35
+	var cabin_front := cabin_z - cabin_len * 0.5
+	var y := 0.25 + H * 0.5 + (H * 0.5 - 0.25) * 0.5
+	var x := -W * 0.22   # the driver sits on the left
+	Greybox.box(v, Vector3(0.3, 0.2, 0.02), Vector3(x, y, cabin_front - 0.015), glow)
+	Greybox.box(v, Vector3(0.02, 0.2, 0.32), Vector3(-W * 0.45 - 0.015, y, cabin_front + 0.45), glow)
+	Greybox.box(v, Vector3(0.02, 0.12, 0.2), Vector3(W * 0.45 + 0.015, y, cabin_front + 0.45), Greybox.glow(Color("3aa8ff"), 1.2))
 
 
 func _build_bike(v: Node3D) -> void:

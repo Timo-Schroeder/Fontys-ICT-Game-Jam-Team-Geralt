@@ -12,6 +12,7 @@ lesson = "Is er geen fietspad? Fiets dan rechts op de weg."
 has_bike_paths = false
 bike_density = 0.0
 emergency_times = PackedFloat32Array()
+bad_actor_chance = 0.04
 start_spot = "S-E-40"
 pickup_spot = "N-E-30"
 delivery_spot = "S-W-30"

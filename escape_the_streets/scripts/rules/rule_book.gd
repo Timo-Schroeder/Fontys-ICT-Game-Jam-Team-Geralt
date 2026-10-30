@@ -20,6 +20,7 @@ enum Violation {
 	NO_LIGHTS,
 	SPEEDING,
 	CAR_OFF_ROAD,
+	NO_LOOK,               ## stepped onto a crossing without looking left and right first
 }
 
 enum Severity {
@@ -99,6 +100,11 @@ const INFO := {
 		"title": "Te hard",
 		"text": "Houd je aan de maximumsnelheid op het bord. In een woonwijk is dat vaak 30 kilometer per uur.",
 	},
+	Violation.NO_LOOK: {
+		"severity": Severity.WARNING,
+		"title": "Goed kijken!",
+		"text": "Kijk eerst links, dan rechts en dan weer links voordat je oversteekt. Niet iedereen stopt!",
+	},
 	Violation.CAR_OFF_ROAD: {
 		"severity": Severity.POLICE,
 		"title": "Niet op de stoep of het fietspad",
@@ -113,6 +119,52 @@ const MOVE_TO_SAFE_SPOT := [
 	Violation.CYCLING_ON_SIDEWALK, Violation.BIKE_ON_ROAD, Violation.WRONG_WAY,
 	Violation.CAR_OFF_ROAD,
 ]
+
+
+## Texts about road users who broke the rules (VehicleSpec.Misbehaviour).
+## %s is replaced by the kind of road user ("auto", "fietser", "fatbike", ...).
+##   title  - level failed because this road user hit you
+##   fail   - explanation on the failed screen
+##   close  - hint when it had to brake hard for you (no life lost: it was their fault)
+##   praise - hint when it passed close by while you waited safely
+const BAD_ACTOR := {
+	VehicleSpec.Misbehaviour.RUNS_RED: {
+		"title": "Botsing met een %s die door rood reed!",
+		"fail": "Deze %s reed door rood. Dat mag niet, maar het gebeurt soms wel. Ook als jij groen hebt: kijk eerst links en rechts, en ga pas als iedereen echt stopt.",
+		"close": "Pas op! Die %s reed door rood. Ook bij groen: kijk of iedereen echt stopt.",
+		"praise": "Goed opgelet! Die %s reed door rood. Gelukkig wachtte je even.",
+	},
+	VehicleSpec.Misbehaviour.IGNORES_ZEBRA: {
+		"title": "Botsing met een %s die niet stopte voor het zebrapad!",
+		"fail": "Deze %s stopte niet voor het zebrapad, terwijl dat wel moest. Steek pas over als iedereen echt stilstaat. Kijk de bestuurder aan: heeft hij jou gezien?",
+		"close": "Pas op! Die %s stopte niet voor het zebrapad. Wacht tot iedereen echt stilstaat.",
+		"praise": "Goed gewacht! Die %s stopte niet voor het zebrapad.",
+	},
+	VehicleSpec.Misbehaviour.IGNORES_PRIORITY: {
+		"title": "Botsing met een %s die geen voorrang gaf!",
+		"fail": "Deze %s gaf geen voorrang, terwijl dat wel moest. Ook als jij voorrang hebt: blijf opletten en rem als iemand de weg op komt.",
+		"close": "Pas op! Die %s gaf je geen voorrang. Blijf opletten, ook als jij voorrang hebt.",
+		"praise": "Goed opgelet! Die %s gaf geen voorrang.",
+	},
+	VehicleSpec.Misbehaviour.SPEEDING: {
+		"title": "Botsing met een %s die veel te hard reed!",
+		"fail": "Deze %s reed veel te hard en kon niet op tijd stoppen. Verkeer kan sneller zijn dan je denkt: wacht liever iets langer.",
+		"close": "Pas op! Die %s reed veel te hard. Verkeer kan sneller zijn dan je denkt.",
+		"praise": "",
+	},
+	VehicleSpec.Misbehaviour.DISTRACTED: {
+		"title": "Botsing met een %s die op zijn telefoon keek!",
+		"fail": "Deze %s keek op zijn telefoon en zag je te laat. Ga er nooit van uit dat iemand jou heeft gezien.",
+		"close": "Pas op! Die %s keek op zijn telefoon en zag je bijna niet.",
+		"praise": "",
+	},
+}
+
+
+static func bad_actor_text(m: int, key: String, who: String) -> String:
+	var texts: Dictionary = BAD_ACTOR.get(m, {})
+	var t: String = texts.get(key, "")
+	return t % who if t.contains("%s") else t
 
 
 static func info(type: int) -> Dictionary:

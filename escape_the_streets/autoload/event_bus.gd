@@ -10,6 +10,11 @@ signal violation(type: int, context: Dictionary)
 ## Non-penalty feedback for the player, e.g. "Druk op E om op de knop te drukken".
 signal hint(text: String, seconds: float)
 
+## A road user broke the rules near the player (VehicleSpec.Misbehaviour).
+## close_call = true: it had to brake hard for the player (no penalty: it was their fault).
+## close_call = false: it passed close by while the player waited safely (praise!).
+signal bad_actor(misbehaviour: int, who: String, close_call: bool)
+
 ## An emergency vehicle is on its way (true) or has gone (false).
 signal emergency_state_changed(active: bool)
 

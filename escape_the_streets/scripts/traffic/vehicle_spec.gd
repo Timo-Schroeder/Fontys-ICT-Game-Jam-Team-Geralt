@@ -7,6 +7,21 @@ extends RefCounted
 const ROAD_KINDS := ["car", "van", "bus", "truck", "motorbike"]
 const BIKE_KINDS := ["bike", "fatbike", "racebike"]
 const EMERGENCY_KINDS := ["ambulance", "fire", "police"]
+## Kinds that can be a "bad actor". Professional drivers (bus, truck), emergency
+## vehicles and groups of racing cyclists always behave.
+const CAN_MISBEHAVE := ["car", "van", "motorbike", "bike", "fatbike"]
+
+## Road users who break the rules, so children learn not to trust that everyone will.
+## They are rare (LevelData.bad_actor_chance) and never unavoidable: they still brake
+## when they finally notice you, just later than a good driver.
+enum Misbehaviour {
+	NONE,
+	RUNS_RED,          ## drives through a red light (only when no other vehicle is in the way)
+	IGNORES_ZEBRA,     ## does not stop for a pedestrian at the zebra crossing
+	IGNORES_PRIORITY,  ## pulls out of the side street without giving way to you
+	SPEEDING,          ## drives much faster than the limit, so needs longer to stop
+	DISTRACTED,        ## looks at a phone and notices you late (you can see the phone glow)
+}
 
 var kind := "car"
 var display_name := "auto"      ## Dutch, used in messages
@@ -22,7 +37,26 @@ var min_gap := 2.0
 var color := Color.WHITE
 var is_bike := false
 var is_emergency := false
+var misbehaviour: int = Misbehaviour.NONE
 var visual_scene: PackedScene = null
+
+
+## Turn this road user into a rule breaker.
+func make_bad(m: int, rng: RandomNumberGenerator) -> void:
+	misbehaviour = m
+	match m:
+		Misbehaviour.RUNS_RED:
+			max_speed *= rng.randf_range(1.05, 1.2)   # in a hurry
+			reaction_time = 0.9
+		Misbehaviour.IGNORES_ZEBRA:
+			reaction_time = 1.1
+		Misbehaviour.IGNORES_PRIORITY:
+			reaction_time = 1.0
+		Misbehaviour.SPEEDING:
+			max_speed *= rng.randf_range(1.35, 1.6)
+			accel *= 1.3
+		Misbehaviour.DISTRACTED:
+			reaction_time = rng.randf_range(1.5, 1.9)
 
 
 static func create(kind_name: String, speed_limit: float, rng: RandomNumberGenerator, wet: bool) -> VehicleSpec:

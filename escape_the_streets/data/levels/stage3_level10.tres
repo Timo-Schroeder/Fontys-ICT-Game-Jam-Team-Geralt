@@ -23,6 +23,7 @@ race_group_share = 0.1
 emergency_times = PackedFloat32Array(40)
 walkers = 4
 runners = 2
+bad_actor_chance = 0.06
 start_spot = "S-E-45"
 pickup_spot = "N-E-30"
 delivery_spot = "S-W-35"

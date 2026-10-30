@@ -20,6 +20,14 @@ const LIGHTS := {"junction_control": LevelData.JunctionControl.TRAFFIC_LIGHTS, "
 const ZEBRA := {"junction_control": LevelData.JunctionControl.PRIORITY_ROAD, "crossing_type": LevelData.CrossingType.ZEBRA}
 const UNMARKED := {"junction_control": LevelData.JunctionControl.PRIORITY_ROAD, "crossing_type": LevelData.CrossingType.NONE}
 
+## Chance that a road user breaks the rules, per stage and level (index 0 = level 1).
+## None in the very first lessons; then rare, slowly rising within each stage.
+const BAD_ACTOR_CHANCE := [
+	[0.0, 0.0, 0.03, 0.03, 0.03, 0.04, 0.04, 0.05, 0.05, 0.06],   # te voet
+	[0.02, 0.04, 0.04, 0.05, 0.04, 0.04, 0.05, 0.04, 0.05, 0.06], # op de fiets
+	[0.02, 0.04, 0.04, 0.04, 0.04, 0.05, 0.05, 0.05, 0.05, 0.06], # met het busje
+]
+
 
 func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT_DIR))
@@ -32,6 +40,8 @@ func _init() -> void:
 					level.set(k, spec[key][k])
 			else:
 				level.set(key, spec[key])
+		if not spec.has("bad_actor_chance"):
+			level.bad_actor_chance = BAD_ACTOR_CHANCE[level.stage][level.number - 1]
 		var problem := level.validate()
 		if problem != "":
 			push_error("Level %s: %s" % [level.level_id(), problem])

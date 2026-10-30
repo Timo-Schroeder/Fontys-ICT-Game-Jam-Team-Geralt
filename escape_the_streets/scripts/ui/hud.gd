@@ -1,9 +1,9 @@
 class_name Hud
 extends CanvasLayer
-## On-screen info: level, objective, arrow to the target, stars, time, speed, hints, siren warning.
+## On-screen info: level, objective, arrow to the target, lives, time, speed, hints, siren warning.
 
 const CONTROLS := {
-	Courier.Mode.WALK: "WASD lopen  •  muis kijken en draaien  •  Shift rennen  •  E drukknop  •  Esc pauze",
+	Courier.Mode.WALK: "WASD lopen  •  muis rondkijken en draaien  •  C vooruit kijken  •  Shift rennen  •  E drukknop  •  Esc pauze",
 	Courier.Mode.BIKE: "W trappen  •  S remmen  •  A/D sturen  •  muis rondkijken  •  C vooruit kijken  •  L licht  •  B bel  •  Esc pauze",
 	Courier.Mode.CAR: "W gas  •  S rem/achteruit  •  A/D sturen  •  muis rondkijken  •  C vooruit kijken  •  H toeter  •  Esc pauze",
 }
@@ -12,7 +12,7 @@ const CONTROLS := {
 @onready var _objective_label: Label = %ObjectiveLabel
 @onready var _compass: Control = %Compass
 @onready var _distance_label: Label = %DistanceLabel
-@onready var _stars: Control = %Stars
+@onready var _lives: Control = %Lives
 @onready var _time_label: Label = %TimeLabel
 @onready var _speed_label: Label = %SpeedLabel
 @onready var _light_label: Label = %LightLabel
@@ -43,8 +43,8 @@ func set_objective(text: String) -> void:
 	_objective_label.text = text
 
 
-func set_stars(stars: int) -> void:
-	_stars.stars = stars
+func set_lives(lives: int) -> void:
+	_lives.lives = lives
 
 
 func update_status(time_left: float, player: Courier, target: Vector3, speed_limit: int) -> void:

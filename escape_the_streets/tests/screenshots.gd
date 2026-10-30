@@ -9,6 +9,10 @@ const MENU_SCENE := preload("res://scenes/main_menu.tscn")
 var shots := [
 	["1-1", Vector3(-5.25, 0, 14), Vector3.FORWARD, "walk_day", "", 0.0],
 	["1-1", Vector3(-5.25, 0, 14), Vector3.FORWARD, "briefing", "briefing", 0.0],
+	["1-1", Vector3(-5.25, 0, 14), Vector3.FORWARD, "walk_carrying", "carry", 0.0],
+	["1-1", Vector3(-5.25, 0, 7.0), Vector3.FORWARD, "walk_look_right", "", -1.2],
+	["1-3", Vector3(-7.25, 0, 16), Vector3.FORWARD, "walk_police", "police_walk", 0.0],
+	["1-1", Vector3(-5.25, 0, 14), Vector3.FORWARD, "success", "success", 0.0],
 	["1-3", Vector3(-7.25, 0, 16), Vector3.FORWARD, "zebra", "", 0.0],
 	["1-9", Vector3(-7.25, 0, 16), Vector3.FORWARD, "walk_evening", "", 0.0],
 	["2-1", Vector3(5.0, 0, 30), Vector3.FORWARD, "bike_first_person", "", 0.0],
@@ -60,7 +64,16 @@ func _ready() -> void:
 			"briefing":
 				level.popup.show_briefing(data)
 			"police":
+				level.hud.set_lives(2)
 				level.popup.show_police(RuleBook.Violation.NO_LIGHTS, 2)
+			"police_walk":
+				level.hud.set_lives(2)
+				level.popup.show_police(RuleBook.Violation.WALKING_ON_ROAD, 2)
+			"carry":
+				courier.set_carrying(true)
+				level.hud.set_lives(2)
+			"success":
+				level.popup.show_success(data, 2, true)
 		await _settle(8)
 		_save(shot[3])
 		get_tree().paused = false

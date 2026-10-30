@@ -14,6 +14,7 @@ bike_density = 0.35
 emergency_times = PackedFloat32Array()
 walkers = 3
 runners = 2
+bad_actor_chance = 0.05
 start_spot = "W-S-45"
 pickup_spot = "E-S-30"
 delivery_spot = "W-N-35"

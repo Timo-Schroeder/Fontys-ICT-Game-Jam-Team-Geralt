@@ -15,6 +15,7 @@ crossing_type = 1
 car_density = 0.22
 bike_density = 0.22
 emergency_times = PackedFloat32Array()
+bad_actor_chance = 0.05
 start_spot = "W-S-40"
 pickup_spot = "E-S-30"
 delivery_spot = "W-N-30"

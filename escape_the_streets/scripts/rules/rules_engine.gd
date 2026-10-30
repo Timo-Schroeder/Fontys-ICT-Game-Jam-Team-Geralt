@@ -1,17 +1,18 @@
 class_name RulesEngine
 extends Node
 ## Turns rule violations (from EventBus) into consequences:
-## a tip on screen, a police stop that costs a star, or the end of the level.
+## a tip on screen, a police stop that costs a life, or the end of the level.
 ## The level decides how to show them; this node only keeps score.
+## The lives left when the package is delivered become the stars for the level (1 life = 1 star).
 
 ## Emitted for POLICE and FAIL violations. The level shows the popup.
-signal penalty(type: int, severity: int, stars_left: int, context: Dictionary)
+signal penalty(type: int, severity: int, lives_left: int, context: Dictionary)
 
-const START_STARS := 3
+const START_LIVES := 3
 ## The same rule cannot be punished twice within this many seconds.
 const COOLDOWN := 4.0
 
-var stars: int = START_STARS
+var lives: int = START_LIVES
 var violations_log: Array[Dictionary] = []   ## for the end screen and later analytics
 var active := false
 var _last_time: Dictionary = {}   ## type -> time (seconds) of the last penalty
@@ -27,7 +28,7 @@ func _physics_process(delta: float) -> void:
 
 
 func reset() -> void:
-	stars = START_STARS
+	lives = START_LIVES
 	violations_log.clear()
 	_last_time.clear()
 
@@ -45,11 +46,11 @@ func _on_violation(type: int, context: Dictionary) -> void:
 			var i := RuleBook.info(type)
 			EventBus.hint.emit("%s %s" % [i["title"], i["text"]], 3.0)
 		RuleBook.Severity.POLICE:
-			stars = maxi(stars - 1, 0)
-			penalty.emit(type, sev, stars, context)
+			lives = maxi(lives - 1, 0)
+			penalty.emit(type, sev, lives, context)
 		RuleBook.Severity.FAIL:
 			active = false
-			penalty.emit(type, sev, stars, context)
+			penalty.emit(type, sev, lives, context)
 
 
 ## Called after a police stop so the same situation is not punished again right away.

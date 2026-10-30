@@ -14,6 +14,7 @@ bus_share = 0.2
 truck_share = 0.15
 emergency_times = PackedFloat32Array()
 walkers = 3
+bad_actor_chance = 0.04
 start_spot = "S-W-40"
 delivery_spot = "N-E-24"
 pickup_name = "Supermarkt"
