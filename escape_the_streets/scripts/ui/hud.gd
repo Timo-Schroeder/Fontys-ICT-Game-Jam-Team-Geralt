@@ -2,10 +2,11 @@ class_name Hud
 extends CanvasLayer
 ## On-screen info: level, objective, arrow to the target, lives, time, speed, hints, siren warning.
 
+## Keys into Locale for the controls line at the bottom of the screen.
 const CONTROLS := {
-	Courier.Mode.WALK: "WASD lopen  •  muis rondkijken en draaien  •  C vooruit kijken  •  Shift rennen  •  E drukknop  •  Esc pauze",
-	Courier.Mode.BIKE: "W trappen  •  S remmen  •  A/D sturen  •  muis rondkijken  •  C vooruit kijken  •  L licht  •  B bel  •  Esc pauze",
-	Courier.Mode.CAR: "W gas  •  S rem/achteruit  •  A/D sturen  •  muis rondkijken  •  C vooruit kijken  •  H toeter  •  Esc pauze",
+	Courier.Mode.WALK: "controls_walk",
+	Courier.Mode.BIKE: "controls_bike",
+	Courier.Mode.CAR: "controls_car",
 }
 
 @onready var _level_label: Label = %LevelLabel
@@ -30,11 +31,14 @@ func _ready() -> void:
 	EventBus.emergency_state_changed.connect(set_siren)
 	_siren_banner.visible = false
 	_hint_panel.visible = false
+	var siren_label := _siren_banner.get_node_or_null("SirenLabel") as Label
+	if siren_label:
+		siren_label.text = Locale.t("hud_siren")
 
 
 func setup(level: LevelData, mode: Courier.Mode) -> void:
-	_level_label.text = "Level %s  •  %s" % [level.level_id(), level.title]
-	_controls_label.text = CONTROLS[mode]
+	_level_label.text = Locale.t("hud_level") % [level.level_id(), level.text("title")]
+	_controls_label.text = Locale.t(CONTROLS[mode])
 	_speed_label.visible = mode != Courier.Mode.WALK
 	_light_label.visible = mode == Courier.Mode.BIKE
 
@@ -49,14 +53,14 @@ func set_lives(lives: int) -> void:
 
 func update_status(time_left: float, player: Courier, target: Vector3, speed_limit: int) -> void:
 	var secs := maxi(int(ceil(time_left)), 0)
-	_time_label.text = "Tijd %d:%02d" % [floori(secs / 60.0), secs % 60]
+	_time_label.text = Locale.t("hud_time") % [floori(secs / 60.0), secs % 60]
 	_time_label.modulate = Color("ff6b5e") if time_left < 30.0 else Color.WHITE
 	if player.mode != Courier.Mode.WALK:
 		var kmh := player.speed_kmh()
-		_speed_label.text = "%d km/u  (max %d)" % [roundi(kmh), speed_limit]
+		_speed_label.text = Locale.t("hud_speed") % [roundi(kmh), speed_limit]
 		_speed_label.modulate = Color("ff6b5e") if kmh > speed_limit + 2 else Color.WHITE
 	if player.mode == Courier.Mode.BIKE:
-		_light_label.text = "Licht: AAN" if player.bike_light_on else "Licht: uit (L)"
+		_light_label.text = Locale.t("hud_light_on") if player.bike_light_on else Locale.t("hud_light_off")
 	# Arrow: angle between where the camera looks and where the target is.
 	var fwd := player.view_direction()
 	var to_target := target - player.global_position

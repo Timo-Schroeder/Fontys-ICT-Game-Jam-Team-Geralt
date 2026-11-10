@@ -109,13 +109,13 @@ func _build() -> void:
 			var row := HBoxContainer.new()
 			col.add_child(row)
 			var b := Button.new()
-			b.text = "%d. %s" % [level.number, level.title]
+			b.text = "%d. %s" % [level.number, level.text("title")]
 			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			b.add_theme_font_size_override("font_size", 20)
 			b.custom_minimum_size = Vector2(0, 40)
 			b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			b.disabled = not GameState.is_unlocked(level)
-			b.tooltip_text = level.briefing
+			b.tooltip_text = level.text("briefing")
 			b.pressed.connect(GameState.start_level.bind(level))
 			row.add_child(b)
 			var star_bar: Control = preload("res://scripts/ui/star_bar.gd").new()

@@ -216,9 +216,9 @@ func _check_route() -> void:
 
 func _update_objective() -> void:
 	if has_package:
-		hud.set_objective(Locale.t("obj_deliver") % data.delivery_name)
+		hud.set_objective(Locale.t("obj_deliver") % data.text("delivery_name"))
 	else:
-		hud.set_objective(Locale.t("obj_pickup") % data.pickup_name)
+		hud.set_objective(Locale.t("obj_pickup") % data.text("pickup_name"))
 	for key: String in streets.markers:
 		var marker: Node3D = streets.markers[key]
 		if key == data.start_spot:

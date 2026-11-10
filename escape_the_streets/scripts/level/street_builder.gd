@@ -354,9 +354,9 @@ func _tree(pos: Vector3) -> void:
 
 func _build_spots() -> void:
 	var names := {
-		level.start_spot: ["A", "Depot", Color("ff7a00")],
-		level.pickup_spot: ["B", level.pickup_name, Color("2a7fff")],
-		level.delivery_spot: ["C", level.delivery_name, Color("2ec45a")],
+		level.start_spot: ["A", Locale.t("sign_depot"), Color("ff7a00")],
+		level.pickup_spot: ["B", level.text("pickup_name"), Color("2a7fff")],
+		level.delivery_spot: ["C", level.text("delivery_name"), Color("2ec45a")],
 	}
 	for key: String in names:
 		var s := layout.spot(key)

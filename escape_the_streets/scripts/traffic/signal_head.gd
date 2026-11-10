@@ -50,7 +50,7 @@ func build(p_kind: Kind, faces: Vector3) -> void:
 			_lamps[1] = Greybox.box(head, Vector3(0.12, 0.06, 0.03), Vector3(0, 1.13, -0.15), _off)
 			_on[1] = Greybox.glow(Color("ff3b2e"), 4.0)
 			var label := Label3D.new()
-			label.text = "DRUK"
+			label.text = Locale.t("push_button_sign")
 			label.font_size = 28
 			label.pixel_size = 0.004
 			label.position = Vector3(0, 0.95, -0.15)

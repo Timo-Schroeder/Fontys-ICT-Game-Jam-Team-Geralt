@@ -73,7 +73,13 @@ func level_id() -> String:
 
 
 func stage_name() -> String:
-	return ["Te voet", "Op de fiets", "Met het busje"][stage]
+	return Locale.t(["stage_1_name", "stage_2_name", "stage_3_name"][stage])
+
+
+## Title, briefing, lesson, pickup_name or delivery_name in the current language.
+## The Dutch text lives in this resource; the English text in autoload/locale.gd.
+func text(field: String) -> String:
+	return Locale.level_text(level_id(), field, str(get(field)))
 
 
 func is_dark() -> bool:

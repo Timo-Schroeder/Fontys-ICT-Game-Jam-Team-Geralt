@@ -94,7 +94,7 @@ func _check_walk(info: StreetLayout.SurfaceInfo, delta: float) -> void:
 			if looked_both_ways(info.crossing.road_axis):
 				if not _praised_look:
 					_praised_look = true
-					EventBus.hint.emit("Goed gekeken!", 2.0)
+					EventBus.hint.emit(Locale.t("good_look"), 2.0)
 			else:
 				not_looked_count += 1
 				_violate(RuleBook.Violation.NO_LOOK)

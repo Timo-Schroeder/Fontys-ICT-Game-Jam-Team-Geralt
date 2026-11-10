@@ -26,8 +26,8 @@ func show_briefing(level: LevelData) -> void:
 	if level.bad_actor_chance > 0.0:
 		warning = Locale.t("bad_actor_warning")
 	_open(Locale.t("briefing_header") % [level.level_id(), level.stage_name()],
-			level.title,
-			level.briefing + warning + Locale.t("briefing_body"),
+			level.text("title"),
+			level.text("briefing") + warning + Locale.t("briefing_body"),
 			Color("ffd38a"), -1, [["start", Locale.t("start_btn")]], 3)
 
 
@@ -48,7 +48,7 @@ func show_fail(type: int, context: Dictionary = {}) -> void:
 	var by: String = context.get("by", "")
 	var bad: int = context.get("bad", VehicleSpec.Misbehaviour.NONE)
 	if type == RuleBook.Violation.COLLISION and by != "":
-		title = Locale.t("collision_header") % by
+		title = Locale.t("collision_header") % Locale.vehicle_with_article(by)
 		if bad != VehicleSpec.Misbehaviour.NONE:
 			title = RuleBook.bad_actor_text(bad, "title", by)
 			text = RuleBook.bad_actor_text(bad, "fail", by)
@@ -66,7 +66,7 @@ func show_out_of_lives() -> void:
 ## stars = the lives you still had when you delivered the package.
 ## summary: {"dodged": rule breakers you safely waited for, "not_looked": crossings without looking}
 func show_success(level: LevelData, stars: int, has_next: bool, summary: Dictionary = {}) -> void:
-	var lesson := level.lesson if level.lesson != "" else Locale.t("default_lesson")
+	var lesson: String = level.text("lesson") if level.lesson != "" else Locale.t("default_lesson")
 	var buttons := [["retry", Locale.t("retry_btn")], ["menu", Locale.t("menu_btn")]]
 	if has_next:
 		buttons.push_front(["next", Locale.t("next_level_btn")])
