@@ -382,7 +382,8 @@ func _build_motor_vehicle(v: Node3D) -> void:
 func _build_phone_glow(v: Node3D) -> void:
 	var glow := Greybox.glow(Color("3aa8ff"), 2.2)
 	if spec.is_bike:
-		Greybox.box(v, Vector3(0.08, 0.13, 0.02), Vector3(0.12, 1.4, -0.3), glow)
+		# Held out in the right hand, beside the body, so it can be seen from behind too.
+		Greybox.box(v, Vector3(0.09, 0.15, 0.02), Vector3(0.3, 1.3, -0.3), glow)
 		return
 	if spec.kind == "motorbike":
 		Greybox.box(v, Vector3(0.08, 0.13, 0.02), Vector3(0.18, 1.25, -0.2), glow)
