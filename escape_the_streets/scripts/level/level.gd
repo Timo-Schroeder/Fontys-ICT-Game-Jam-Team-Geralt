@@ -52,7 +52,6 @@ func _ready() -> void:
 	courier.set_mode(mode)
 	courier.grip = 0.7 if data.weather == LevelData.Weather.RAIN else 1.0
 	var start := layout.spot(data.start_spot)
-	# The van is long: start it a bit towards the street so it does not touch the building.
 	var start_pos := start.pad_center + (start.to_street * 0.8 if mode == Courier.Mode.CAR else Vector3.ZERO)
 	courier.teleport(start_pos, start.to_street)
 
@@ -81,7 +80,7 @@ func _physics_process(delta: float) -> void:
 	time_left -= delta
 	traffic.tick(delta)
 	if state != State.PLAYING:
-		return   # a collision during the traffic update ended the level
+		return
 	var info := monitor.tick(delta)
 	if state != State.PLAYING:
 		return
@@ -108,11 +107,11 @@ func _begin_play() -> void:
 	_give_control()
 	match courier.mode:
 		Courier.Mode.WALK:
-			hud.show_hint("Kijk om je heen met de muis. Voor je oversteekt: kijk links, rechts en weer links!", 6.0)
+			hud.show_hint(Locale.t("hint_walk"), 6.0)
 		Courier.Mode.BIKE:
-			hud.show_hint("Kijk om je heen met de muis, ook over je schouder. Druk op C om weer vooruit te kijken.", 6.0)
+			hud.show_hint(Locale.t("hint_bike"), 6.0)
 		Courier.Mode.CAR:
-			hud.show_hint("Kijk om je heen met de muis en kijk in je spiegels: achter je zit geen raam. C = vooruit kijken.", 7.0)
+			hud.show_hint(Locale.t("hint_car"), 7.0)
 
 
 func _give_control() -> void:
@@ -182,7 +181,6 @@ func _succeed() -> void:
 	state = State.ENDED
 	rules.active = false
 	courier.control_enabled = false
-	# Every life you still have becomes a star in the menu.
 	var stars := rules.lives
 	GameState.record_result(data, stars)
 	EventBus.level_finished.emit(true, stars)
@@ -210,7 +208,7 @@ func _check_route() -> void:
 		if courier.mode != Courier.Mode.WALK:
 			monitor.set_safe_spot(target.pad_center, target.to_street)
 		EventBus.package_picked_up.emit()
-		hud.show_hint("Pakketje opgehaald! Breng het nu naar C.", 3.0)
+		hud.show_hint(Locale.t("hint_package_pickup"), 3.0)
 		_update_objective()
 	else:
 		_succeed()
@@ -218,9 +216,9 @@ func _check_route() -> void:
 
 func _update_objective() -> void:
 	if has_package:
-		hud.set_objective("Breng het pakketje naar C: %s" % data.delivery_name)
+		hud.set_objective(Locale.t("obj_deliver") % data.delivery_name)
 	else:
-		hud.set_objective("Ga naar B: haal het pakketje op bij %s" % data.pickup_name)
+		hud.set_objective(Locale.t("obj_pickup") % data.pickup_name)
 	for key: String in streets.markers:
 		var marker: Node3D = streets.markers[key]
 		if key == data.start_spot:
@@ -255,7 +253,7 @@ func _on_interact() -> void:
 	var c := traffic.button_near(courier.global_position)
 	if c:
 		traffic.press_button(c)
-		hud.show_hint("Je hebt op de knop gedrukt. Wacht op groen.", 2.5)
+		hud.show_hint(Locale.t("hint_button_press"), 2.5)
 
 
 func _update_hints(info: StreetLayout.SurfaceInfo) -> void:
@@ -265,21 +263,21 @@ func _update_hints(info: StreetLayout.SurfaceInfo) -> void:
 		var button := traffic.button_near(pos)
 		if button and info.surface != StreetLayout.Surface.CROSSING:
 			if traffic.lights.ped_state(button) == TrafficLightController.Light.GREEN:
-				text = "Groen! Kijk nog even links en rechts en steek dan over."
+				text = Locale.t("hint_green_light")
 			elif button.requested:
-				text = "Wacht op het groene licht..."
+				text = Locale.t("hint_wait_green")
 			else:
-				text = "Druk op E op de knop en wacht op groen."
+				text = Locale.t("hint_press_button")
 		else:
 			for c in layout.crossings:
 				if c.claim_rect.has_point(StreetLayout.to_2d(pos)) and not c.road_rect.has_point(StreetLayout.to_2d(pos)) \
 						and info.surface != StreetLayout.Surface.CROSSING:
 					if c.type == LevelData.CrossingType.ZEBRA:
-						text = "Zebrapad: wacht tot het verkeer echt stilstaat. Kijk links, rechts en weer links."
+						text = Locale.t("hint_zebra")
 					elif c.type == LevelData.CrossingType.NONE:
-						text = "Geen zebrapad: wacht tot de weg helemaal vrij is."
+						text = Locale.t("hint_no_zebra")
 	elif courier.mode == Courier.Mode.BIKE and data.is_dark() and not courier.bike_light_on:
-		text = "Het is donker: zet je fietslicht aan met L."
+		text = Locale.t("hint_no_lights")
 	hud.set_context_hint(text)
 
 

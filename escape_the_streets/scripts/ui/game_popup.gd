@@ -24,19 +24,20 @@ func _ready() -> void:
 func show_briefing(level: LevelData) -> void:
 	var warning := ""
 	if level.bad_actor_chance > 0.0:
-		warning = "\n\nLet op: niet iedereen houdt zich aan de regels! Kijk altijd of auto's en fietsers echt stoppen."
-	_open("Level %s  •  %s" % [level.level_id(), level.stage_name()], level.title,
-			level.briefing + warning + "\n\nBreng het pakketje van A naar B en dan naar C. Je hebt 3 levens: "
-			+ "elke keer dat de politie je aanhoudt, ben je er een kwijt. Elk leven dat je overhoudt, wordt een ster!",
-			Color("ffd38a"), -1, [["start", "Start!"]], 3)
+		warning = Locale.t("bad_actor_warning")
+	_open(Locale.t("briefing_header") % [level.level_id(), level.stage_name()],
+			level.title,
+			level.briefing + warning + Locale.t("briefing_body"),
+			Color("ffd38a"), -1, [["start", Locale.t("start_btn")]], 3)
 
 
 func show_police(type: int, lives_left: int) -> void:
 	var info := RuleBook.info(type)
-	var extra := "\n\nDe politie brengt je terug naar een veilige plek." if type in RuleBook.MOVE_TO_SAFE_SPOT else ""
+	var extra := Locale.t("police_move_note") if type in RuleBook.MOVE_TO_SAFE_SPOT else ""
 	extra += "\n\n" + _lives_text(lives_left)
-	_open("Politie!", info["title"], info["text"] + extra, Color("6fa8ff"), -1,
-			[["continue", "Ik snap het" if lives_left > 0 else "Verder"]], lives_left)
+	var btn_label := Locale.t("understand_btn") if lives_left > 0 else Locale.t("continue_btn")
+	_open(Locale.t("police_header"), info["title"], info["text"] + extra, Color("6fa8ff"), -1,
+			[["continue", btn_label]], lives_left)
 
 
 ## context: {"by": "auto", "bad": VehicleSpec.Misbehaviour} for collisions.
@@ -47,51 +48,51 @@ func show_fail(type: int, context: Dictionary = {}) -> void:
 	var by: String = context.get("by", "")
 	var bad: int = context.get("bad", VehicleSpec.Misbehaviour.NONE)
 	if type == RuleBook.Violation.COLLISION and by != "":
-		title = "Botsing met een %s!" % by
+		title = Locale.t("collision_header") % by
 		if bad != VehicleSpec.Misbehaviour.NONE:
-			# Hit by someone who broke the rules: explain what they did wrong
-			# and what the child can do to stay safe anyway.
 			title = RuleBook.bad_actor_text(bad, "title", by)
 			text = RuleBook.bad_actor_text(bad, "fail", by)
-	_open("Level mislukt", title, text, Color("ff7b6b"), -1,
-			[["retry", "Opnieuw"], ["menu", "Menu"]])
+	_open(Locale.t("fail_header"), title, text, Color("ff7b6b"), -1,
+			[["retry", Locale.t("retry_btn")], ["menu", Locale.t("menu_btn")]])
 
 
 func show_out_of_lives() -> void:
-	_open("Level mislukt", "Geen levens meer",
-			"Je bent drie keer door de politie aangehouden. Probeer het nog een keer en let goed op de regels.",
-			Color("ff7b6b"), -1, [["retry", "Opnieuw"], ["menu", "Menu"]], 0)
+	_open(Locale.t("out_of_lives_header"), Locale.t("out_of_lives_title"),
+			Locale.t("out_of_lives_body"),
+			Color("ff7b6b"), -1,
+			[["retry", Locale.t("retry_btn")], ["menu", Locale.t("menu_btn")]], 0)
 
 
 ## stars = the lives you still had when you delivered the package.
 ## summary: {"dodged": rule breakers you safely waited for, "not_looked": crossings without looking}
 func show_success(level: LevelData, stars: int, has_next: bool, summary: Dictionary = {}) -> void:
-	var lesson := level.lesson if level.lesson != "" else "Goed gedaan!"
-	var buttons := [["retry", "Nog een keer"], ["menu", "Menu"]]
+	var lesson := level.lesson if level.lesson != "" else Locale.t("default_lesson")
+	var buttons := [["retry", Locale.t("retry_btn")], ["menu", Locale.t("menu_btn")]]
 	if has_next:
-		buttons.push_front(["next", "Volgend level"])
-	var earned := "Je had nog %s over, dus je krijgt %d %s." % [
-			"1 leven" if stars == 1 else "%d levens" % stars, stars, "ster" if stars == 1 else "sterren"]
+		buttons.push_front(["next", Locale.t("next_level_btn")])
+	var lives_str := Locale.t("lives_1") if stars == 1 else Locale.t("lives_n") % stars
+	var star_str := Locale.t("star_1") if stars == 1 else Locale.t("stars_n")
+	var earned := Locale.t("lives_earned") % [lives_str, stars, star_str]
 	var dodged: int = summary.get("dodged", 0)
 	var not_looked: int = summary.get("not_looked", 0)
 	if dodged > 0:
-		earned += "\nJe hebt %s gewacht voor iemand die zich niet aan de regels hield. Slim!" % (
-				"1 keer" if dodged == 1 else "%d keer" % dodged)
+		earned += Locale.t("dodged_1") if dodged == 1 else Locale.t("dodged_n") % dodged
 	if not_looked > 0:
-		earned += "\nJe bent %s overgestoken zonder eerst links en rechts te kijken." % (
-				"1 keer" if not_looked == 1 else "%d keer" % not_looked)
-	_open("Pakketje bezorgd!", ["Dat kan veiliger...", "Netjes!", "Goed gedaan!", "Perfect! Superveilig!"][stars],
-			earned + "\n\nOnthoud: " + lesson, Color("7be08a"), stars, buttons)
+		earned += Locale.t("not_looked_1") if not_looked == 1 else Locale.t("not_looked_n") % not_looked
+	var ratings: Array = Locale.ta("success_ratings")
+	_open(Locale.t("package_delivered"), ratings[stars],
+			earned + Locale.t("lesson_prefix") + lesson, Color("7be08a"), stars, buttons)
 
 
 static func _lives_text(lives_left: int) -> String:
 	if lives_left <= 0:
-		return "Je hebt geen levens meer."
-	return "Je hebt nog 1 leven." if lives_left == 1 else "Je hebt nog %d levens." % lives_left
+		return Locale.t("no_lives")
+	return Locale.t("lives_left_1") if lives_left == 1 else Locale.t("lives_left_n") % lives_left
 
 
 func show_pause() -> void:
-	_open("Pauze", "", "", Color.WHITE, -1, [["resume", "Verder"], ["retry", "Opnieuw"], ["menu", "Menu"]])
+	_open(Locale.t("pause_header"), "", "", Color.WHITE, -1,
+			[["resume", Locale.t("resume_btn")], ["retry", Locale.t("restart_btn")], ["menu", Locale.t("menu_btn")]])
 
 
 func close() -> void:
@@ -136,7 +137,6 @@ func _open(header: String, subtitle: String, body: String, color: Color, stars: 
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Esc closes the pause menu.
-	if is_open and event.is_action_pressed("pause") and _header.text == "Pauze":
+	if is_open and event.is_action_pressed("pause") and _header.text == Locale.t("pause_header"):
 		get_viewport().set_input_as_handled()
 		action.emit("resume")
